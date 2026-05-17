@@ -33,7 +33,6 @@ const CanvasArea = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // এক্সপোর্ট প্রসেস
   useEffect(() => {
     const handleExport = () => {
       if (stageRef.current) {
@@ -64,7 +63,6 @@ const CanvasArea = () => {
       const selectedNode = stageRef.current.findOne(`#text-${selectedTextId}`);
       const currentLayerData = texts.find(t => t.id === selectedTextId);
       
-      // যদি লেয়ার লকড থাকে, ট্রান্সফর্মার বক্স হাইড করা থাকবে
       if (selectedNode && currentLayerData && !currentLayerData.locked && currentLayerData.visible) {
         trRef.current.nodes([selectedNode]);
         trRef.current.getLayer().batchDraw();
@@ -95,7 +93,6 @@ const CanvasArea = () => {
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center bg-zinc-950 overflow-hidden">
       
-      {/* এক্সটার্নাল ফন্ট ইঞ্জেকশন এর জন্য ডাইনামিক স্টাইল ব্লক */}
       <style dangerouslySetInnerHTML={{ __html: customFonts.map(font => `
         @font-face {
           font-family: '${font.name}';
@@ -129,7 +126,7 @@ const CanvasArea = () => {
             )}
 
             {texts.map((textObj) => {
-              if (!textObj.visible) return null; // হাইড লেয়ার রেন্ডার হবে না
+              if (!textObj.visible) return null;
 
               const premiumFontStack = `${textObj.fontFamily}, -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
 
@@ -145,7 +142,8 @@ const CanvasArea = () => {
                   fill={textObj.fill}
                   align={textObj.align}
                   letterSpacing={textObj.letterSpacing}
-                  draggable={!textObj.locked} // লকড থাকলে ড্র্যাগ অফ
+                  lineHeight={textObj.lineHeight || 1.2} // লাইন স্পেসিং ক্যানভাসে রেন্ডার করা হলো
+                  draggable={!textObj.locked}
                   onClick={() => setSelectedText(textObj.id)}
                   onTap={() => setSelectedText(textObj.id)}
                   onDragEnd={(e: any) => {
@@ -162,13 +160,11 @@ const CanvasArea = () => {
                       fontSize: Math.max(12, Math.round(textObj.fontSize * scaleX)),
                     });
                   }}
-                  // কাস্টম রিফাইন্ড শ্যাডো পজিশনিং (X, Y আলাদা)
                   shadowColor={textObj.shadowColor}
                   shadowBlur={textObj.shadowBlur}
                   shadowOffsetX={textObj.shadowOffsetX}
                   shadowOffsetY={textObj.shadowOffsetY}
                   shadowOpacity={textObj.shadowBlur > 0 || textObj.shadowOffsetX !== 0 || textObj.shadowOffsetY !== 0 ? 0.8 : 0}
-                  // কাস্টম টেক্সট স্ট্রোক (আউটলাইন)
                   stroke={textObj.stroke}
                   strokeWidth={textObj.strokeWidth}
                   fillAfterStroke={true}

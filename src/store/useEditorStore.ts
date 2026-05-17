@@ -11,15 +11,13 @@ export interface TextLayer {
   y: number;
   align: 'left' | 'center' | 'right';
   letterSpacing: number;
-  // নতুন শ্যাডো এবং পজিশনিং প্রপার্টিজ
+  lineHeight: number;
   shadowColor: string;
   shadowBlur: number;
   shadowOffsetX: number;
   shadowOffsetY: number;
-  // নতুন স্ট্রোক প্রপার্টিজ
   stroke: string;
   strokeWidth: number;
-  // লেয়ার উইন্ডো কন্ট্রোল
   visible: boolean;
   locked: boolean;
 }
@@ -35,8 +33,10 @@ interface EditorState {
   bgBlur: number;
   bgBrightness: number;
   texts: TextLayer[];
-  customFonts: CustomFont[]; // আপলোড করা কাস্টম ফন্ট ট্র্যাক করার জন্য
+  customFonts: CustomFont[];
   selectedTextId: string | null;
+  isLayersOpen: boolean; // ড্রয়ার কন্ট্রোল
+  setLayersOpen: (isOpen: boolean) => void;
   setBgColor: (color: string) => void;
   setBgImage: (url: string | null) => void;
   setBgBlur: (blur: number) => void;
@@ -61,6 +61,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   bgBrightness: 0,
   selectedTextId: null,
   customFonts: [],
+  isLayersOpen: false,
   texts: [
     {
       id: '1',
@@ -73,6 +74,7 @@ export const useEditorStore = create<EditorState>((set) => ({
       y: 1350,
       align: 'left',
       letterSpacing: 0,
+      lineHeight: 1.2,
       shadowColor: '#000000',
       shadowBlur: 10,
       shadowOffsetX: 0,
@@ -84,6 +86,7 @@ export const useEditorStore = create<EditorState>((set) => ({
     },
   ],
 
+  setLayersOpen: (isOpen) => set({ isLayersOpen: isOpen }),
   setBgColor: (color) => set({ bgColor: color }),
   setBgImage: (url) => set({ bgImage: url }),
   setBgBlur: (blur) => set({ bgBlur: blur }),
@@ -104,6 +107,7 @@ export const useEditorStore = create<EditorState>((set) => ({
           y: 800,
           align: 'left',
           letterSpacing: 0,
+          lineHeight: 1.2,
           shadowColor: '#000000',
           shadowBlur: 0,
           shadowOffsetX: 0,
@@ -115,30 +119,20 @@ export const useEditorStore = create<EditorState>((set) => ({
           ...newText,
         },
       ],
+      selectedTextId: null,
     })),
 
   updateText: (id, attrs) =>
-    set((state) => ({
-      texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)),
-    })),
-
+    set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)) })),
+  
   deleteText: (id) =>
-    set((state) => ({
-      texts: state.texts.filter((t) => t.id !== id),
-      selectedTextId: state.selectedTextId === id ? null : state.selectedTextId,
-    })),
+    set((state) => ({ texts: state.texts.filter((t) => t.id !== id), selectedTextId: state.selectedTextId === id ? null : state.selectedTextId })),
 
   duplicateText: (id) =>
     set((state) => {
       const source = state.texts.find((t) => t.id === id);
       if (!source) return state;
-      const clone = {
-        ...source,
-        id: Date.now().toString(),
-        x: source.x + 30, // সামান্য সরিয়ে কপি করা
-        y: source.y + 30,
-        locked: false, // ডুপ্লিকেট লেয়ার ডিফল্ট আনলক থাকবে
-      };
+      const clone = { ...source, id: Date.now().toString(), x: source.x + 30, y: source.y + 30, locked: false };
       return { texts: [...state.texts, clone] };
     }),
 
@@ -163,22 +157,9 @@ export const useEditorStore = create<EditorState>((set) => ({
     }),
 
   centerTextOnCanvas: (id, canvasWidth, canvasHeight) =>
-    set((state) => ({
-      texts: state.texts.map((t) => (t.id === id ? { ...t, x: canvasWidth / 2 - 200, y: canvasHeight / 2 } : t)),
-    })),
+    set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, x: canvasWidth / 2 - 200, y: canvasHeight / 2 } : t)) })),
 
-  toggleVisibility: (id) =>
-    set((state) => ({
-      texts: state.texts.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t)),
-    })),
-
-  toggleLock: (id) =>
-    set((state) => ({
-      texts: state.texts.map((t) => (t.id === id ? { ...t, locked: !t.locked } : t)),
-    })),
-
-  addCustomFont: (name, url) =>
-    set((state) => ({
-      customFonts: [...state.customFonts, { name, url }],
-    })),
+  toggleVisibility: (id) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t)) })),
+  toggleLock: (id) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, locked: !t.locked } : t)) })),
+  addCustomFont: (name, url) => set((state) => ({ customFonts: [...state.customFonts, { name, url }] })),
 }));
