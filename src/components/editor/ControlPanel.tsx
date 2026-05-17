@@ -2,14 +2,19 @@
 
 import React, { useRef, useState } from 'react';
 import { useEditorStore } from '../../store/useEditorStore';
-import { AlignLeft, AlignCenter, AlignRight, ImagePlus, X, MoveUp, MoveDown, Focus, UploadCloud, Type, Palette, Sparkles, Edit2 } from 'lucide-react';
+import { 
+  AlignLeft, AlignCenter, AlignRight, ImagePlus, X, 
+  MoveUp, MoveDown, Focus, UploadCloud, Type, Palette, Sparkles, Edit2,
+  Undo2, Redo2, Maximize2, Move
+} from 'lucide-react';
 
 const ControlPanel = () => {
   const { 
     texts, selectedTextId, updateText, addText, bgColor, setBgColor, 
     bgImage, setBgImage, customFonts, addCustomFont, bgBlur, setBgBlur, 
-    bgBrightness, setBgBrightness, moveLayerUp, moveLayerDown, 
-    centerTextOnCanvas, setTypingOverlayOpen, aspectRatio // aspectRatio ইমপোর্ট করা হলো
+    bgBrightness, setBgBrightness, bgScale, setBgScale, bgX, setBgX, bgY, setBgY,
+    moveLayerUp, moveLayerDown, centerTextOnCanvas, setTypingOverlayOpen, aspectRatio,
+    undo, redo, past, future // Undo/Redo অ্যাকশন ও স্ট্যাক ইমপোর্ট করা হলো
   } = useEditorStore();
   
   const [activeTab, setActiveTab] = useState<'bg' | 'edit' | 'effects'>('edit');
@@ -17,7 +22,6 @@ const ControlPanel = () => {
   const selectedText = texts.find((t) => t.id === selectedTextId);
   const bgColors = ['transparent', '#000000', '#18181b', '#27272a', '#ffffff', '#1e1e1e', '#0f172a', '#450a0a'];
 
-  // এই অংশটি মিসিং ছিল (বিভিন্ন ক্যানভাস সাইজের ডিকশনারি)
   const aspectRatios: Record<string, { w: number, h: number }> = {
     '9:16': { w: 1080, h: 1920 },
     '1:1': { w: 1080, h: 1080 },
@@ -25,7 +29,6 @@ const ControlPanel = () => {
     '16:9': { w: 1920, h: 1080 },
   };
 
-  // বর্তমান ক্যানভাসের সাইজ বের করা (সেভ-ফেইলসেফ সহ)
   const currentCanvasWidth = aspectRatios[aspectRatio]?.w || 1080;
   const currentCanvasHeight = aspectRatios[aspectRatio]?.h || 1920;
 
@@ -35,15 +38,45 @@ const ControlPanel = () => {
       const fontName = file.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
       const fontUrl = URL.createObjectURL(file);
       const fontFace = new FontFace(fontName, `url(${fontUrl})`);
-      fontFace.load().then((loadedFace) => { document.fonts.add(loadedFace); addCustomFont(fontName, fontUrl); if (selectedTextId) updateText(selectedTextId, { fontFamily: fontName }); }).catch(err => alert("Font error"));
+      fontFace.load().then((loadedFace) => { 
+        document.fonts.add(loadedFace); 
+        addCustomFont(fontName, fontUrl, file); // ৩. এখানে file (Blob) পাস করা হলো পার্মানেন্টলি সেভের জন্য
+        if (selectedTextId) updateText(selectedTextId, { fontFamily: fontName }); 
+      }).catch(err => alert("Font error"));
     }
   };
 
   return (
     <div className="flex flex-col h-full select-none bg-gradient-to-b from-[#0c0c0e] to-[#050505] relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
       
+      {/* --- ১. UNDO / REDO ENGINE HEADER BAR (Top of Panel) --- */}
+      <div className="flex justify-between items-center px-5 py-2.5 border-b border-white/5 bg-black/20 shrink-0">
+        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest">History Engine</span>
+        <div className="flex gap-1">
+          <button 
+            onClick={undo} 
+            disabled={past.length === 0}
+            className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs ${past.length === 0 ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-300 hover:bg-white/5 hover:text-white active:scale-95'}`}
+            title="Undo"
+          >
+            <Undo2 size={15} /> <span className="text-[11px]">Undo</span>
+          </button>
+          <div className="w-px bg-white/5 my-1 mx-1"></div>
+          <button 
+            onClick={redo} 
+            disabled={future.length === 0}
+            className={`p-1.5 rounded-lg transition-all flex items-center gap-1 text-xs ${future.length === 0 ? 'text-zinc-700 cursor-not-allowed' : 'text-zinc-300 hover:bg-white/5 hover:text-white active:scale-95'}`}
+            title="Redo"
+          >
+            <span className="text-[11px]">Redo</span> <Redo2 size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* --- SCROLLABLE WORKSPACE AREA --- */}
       <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-6 custom-scrollbar">
 
+        {/* TAB 1: BACKGROUND MANAGEMENT */}
         {activeTab === 'bg' && (
           <div className="space-y-5 animate-in slide-in-from-right-4 duration-300 pb-4">
             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2"><Palette size={14} className="text-blue-400"/> Canvas Background</h3>
@@ -57,11 +90,41 @@ const ControlPanel = () => {
               </label>
             </div>
             
+            {/* ২. ছবির সাইজ এবং ডানে-বামে সরানোর সম্পূর্ণ কন্ট্রোল প্যানেল (Image Transformer Options) */}
             {bgImage && (
-              <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 relative backdrop-blur-md shadow-lg">
-                <button onClick={() => setBgImage(null)} className="absolute top-3 right-3 p-1.5 text-zinc-400 hover:text-red-400 bg-black/40 rounded-full transition-colors"><X size={14} /></button>
-                <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Image Blur</label><span className="text-blue-400">{bgBlur}</span></div><input type="range" min="0" max="50" value={bgBlur} onChange={(e) => setBgBlur(Number(e.target.value))} className="w-full accent-blue-500" /></div>
-                <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Brightness</label><span className="text-blue-400">{bgBrightness}%</span></div><input type="range" min="-100" max="100" value={bgBrightness} onChange={(e) => setBgBrightness(Number(e.target.value))} className="w-full accent-blue-500" /></div>
+              <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md shadow-lg">
+                <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                  <h4 className="text-[11px] font-bold uppercase text-blue-400 tracking-wider flex items-center gap-1.5"><Maximize2 size={13}/> Image Geometry</h4>
+                  <button onClick={() => setBgImage(null)} className="p-1 text-zinc-400 hover:text-red-400 bg-black/40 rounded-full transition-colors"><X size={12} /></button>
+                </div>
+                
+                {/* ২. সাইজ বড়-ছোট করার বার (Zoom Scale) */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Image Size (Zoom)</label><span className="text-blue-400">{Math.round(bgScale * 100)}%</span></div>
+                  <input type="range" min="0.5" max="4" step="0.05" value={bgScale} onChange={(e) => setBgScale(Number(e.target.value))} className="w-full accent-blue-500" />
+                </div>
+
+                {/* ২. ডানে-বামে সরানোর বার (Horizontal Offset X) */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Position X (Horizontal)</label><span className="text-blue-400">{bgX}px</span></div>
+                  <input type="range" min="-1000" max="1000" step="1" value={bgX} onChange={(e) => setBgX(Number(e.target.value))} className="w-full accent-blue-500" />
+                </div>
+
+                {/* ২. উপরে-নিচে সরানোর বার (Vertical Offset Y) */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Position Y (Vertical)</label><span className="text-blue-400">{bgY}px</span></div>
+                  <input type="range" min="-1000" max="1000" step="1" value={bgY} onChange={(e) => setBgY(Number(e.target.value))} className="w-full accent-blue-500" />
+                </div>
+
+                <div className="w-full border-t border-white/5 pt-2 flex gap-2">
+                  <button onClick={() => { setBgScale(1); setBgX(0); setBgY(0); }} className="w-full text-center py-1 bg-white/5 hover:bg-white/10 rounded text-[10px] font-bold text-zinc-400 uppercase tracking-wide transition-colors">Reset Image Transformation</button>
+                </div>
+
+                {/* ফিল্টার স্লাইডারসমূহ */}
+                <div className="border-t border-white/5 pt-3 space-y-3">
+                  <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Image Blur</label><span className="text-blue-400">{bgBlur}</span></div><input type="range" min="0" max="50" value={bgBlur} onChange={(e) => setBgBlur(Number(e.target.value))} className="w-full accent-blue-500" /></div>
+                  <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Brightness</label><span className="text-blue-400">{bgBrightness}%</span></div><input type="range" min="-100" max="100" value={bgBrightness} onChange={(e) => setBgBrightness(Number(e.target.value))} className="w-full accent-blue-500" /></div>
+                </div>
               </div>
             )}
           </div>
@@ -78,14 +141,15 @@ const ControlPanel = () => {
         {activeTab === 'edit' && selectedText && (
           <div className="space-y-5 animate-in slide-in-from-right-4 duration-300 pb-4">
             
+            {/* Quick Actions */}
             <div className="flex gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 backdrop-blur-sm shadow-sm">
-              {/* এখানে ডাইনামিক সাইজ বসানো হয়েছে */}
               <button onClick={() => centerTextOnCanvas(selectedText.id, currentCanvasWidth, currentCanvasHeight)} className="flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] font-medium text-zinc-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><Focus size={14} /> Center Frame</button>
               <div className="w-px bg-white/10 my-1 mx-1"></div>
               <button onClick={() => moveLayerUp(selectedText.id)} className="px-4 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><MoveUp size={16} /></button>
               <button onClick={() => moveLayerDown(selectedText.id)} className="px-4 text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"><MoveDown size={16} /></button>
             </div>
 
+            {/* Smart Keyboard Triger Button */}
             <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-4 rounded-2xl flex justify-between items-center shadow-inner cursor-pointer hover:bg-white/5 transition-colors group" onClick={() => setTypingOverlayOpen(true)}>
                <div className="flex-1 min-w-0 pr-4">
                  <p className="text-[10px] uppercase text-blue-400 font-bold mb-1 tracking-wider">Content</p>
@@ -99,7 +163,7 @@ const ControlPanel = () => {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Alignment</label>
                 <div className="flex bg-white/5 p-1.5 rounded-xl border border-white/10">
                   {['left', 'center', 'right'].map((alignOpt) => (
-                    <button key={alignOpt} onClick={() => updateText(selectedText.id, { align: alignOpt as any })} className={`flex-1 flex justify-center py-2 rounded-lg transition-all ${selectedText.align === alignOpt ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>
+                    <button key={alignOpt} onClick={() => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { align: alignOpt as any }); }} className={`flex-1 flex justify-center py-2 rounded-lg transition-all ${selectedText.align === alignOpt ? 'bg-zinc-800 text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}>
                       {alignOpt === 'left' && <AlignLeft size={16} />}
                       {alignOpt === 'center' && <AlignCenter size={16} />}
                       {alignOpt === 'right' && <AlignRight size={16} />}
@@ -111,21 +175,22 @@ const ControlPanel = () => {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Color Palette</label>
                 <div className="flex gap-2 flex-wrap bg-white/5 p-2 rounded-xl border border-white/10 justify-center">
                   {['#FFFFFF', '#A1A1AA', '#FCA5A5', '#000000'].map((color) => (
-                    <button key={color} onClick={() => updateText(selectedText.id, { fill: color })} className={`w-7 h-7 rounded-full border-2 transition-transform ${selectedText.fill === color ? 'border-blue-500 scale-125 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
+                    <button key={color} onClick={() => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { fill: color }); }} className={`w-7 h-7 rounded-full border-2 transition-transform ${selectedText.fill === color ? 'border-blue-500 scale-125 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
                   ))}
                 </div>
               </div>
             </div>
 
+            {/* Typography Section */}
             <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg">
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                  <label>Typography</label>
+                  <label>Font Family</label>
                   <span className="text-blue-400 bg-blue-400/10 px-2 py-1 rounded-md cursor-pointer flex items-center gap-1 hover:bg-blue-400/20 transition-colors" onClick={() => fileInputRef.current?.click()}><UploadCloud size={12} /> Add Font</span>
                 </div>
                 <input type="file" ref={fileInputRef} accept=".ttf,.otf,.woff" onChange={handleFontUpload} className="hidden" />
-                <select value={selectedText.fontFamily} onChange={(e) => updateText(selectedText.id, { fontFamily: e.target.value })} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
-                  <optgroup label="Custom Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
+                <select value={selectedText.fontFamily} onChange={(e) => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { fontFamily: e.target.value }); }} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors">
+                  <optgroup label="Custom Fonts (Saved Forever)">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
                   <optgroup label="Aesthetic Presets">
                     <option value="'Mont Blanc', sans-serif">Mont Blanc (Premium)</option>
                     <option value="sans-serif">System Default</option>
@@ -136,45 +201,48 @@ const ControlPanel = () => {
               </div>
               <div className="space-y-1.5 pt-2">
                 <div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Font Size</label><span className="text-blue-400">{selectedText.fontSize}px</span></div>
-                <input type="range" min="12" max="150" value={selectedText.fontSize} onChange={(e) => updateText(selectedText.id, { fontSize: Number(e.target.value) })} className="w-full accent-blue-500" />
+                {/* স্লাইডারে হাত দিলে যেন একগাদা হিস্ট্রি জমা না হয়, তাই মাউস আপ/টাচ এন্ডে ফাইনাল ডাটায় হিস্ট্রি রেডি হবে */}
+                <input type="range" min="12" max="150" value={selectedText.fontSize} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { fontSize: Number(e.target.value) })} className="w-full accent-blue-500" />
               </div>
             </div>
           </div>
         )}
 
+        {/* TAB 3: EFFECTS CONTROLS */}
         {activeTab === 'effects' && selectedText && (
           <div className="space-y-5 animate-in slide-in-from-right-4 duration-300 pb-4">
              <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Spacing</label><span className="text-blue-400">{selectedText.letterSpacing}px</span></div><input type="range" min="-5" max="30" value={selectedText.letterSpacing} onChange={(e) => updateText(selectedText.id, { letterSpacing: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
-              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Line Height</label><span className="text-blue-400">{selectedText.lineHeight || 1.2}</span></div><input type="range" min="0.5" max="3" step="0.1" value={selectedText.lineHeight || 1.2} onChange={(e) => updateText(selectedText.id, { lineHeight: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Spacing</label><span className="text-blue-400">{selectedText.letterSpacing}px</span></div><input type="range" min="-5" max="30" value={selectedText.letterSpacing} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { letterSpacing: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Line Height</label><span className="text-blue-400">{selectedText.lineHeight || 1.2}</span></div><input type="range" min="0.5" max="3" step="0.1" value={selectedText.lineHeight || 1.2} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { lineHeight: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
             </div>
 
             <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg">
               <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Outline (Stroke)</h4>
-              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Thickness</label><span className="text-white">{selectedText.strokeWidth || 0}px</span></div><input type="range" min="0" max="10" step="0.5" value={selectedText.strokeWidth || 0} onChange={(e) => updateText(selectedText.id, { strokeWidth: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Thickness</label><span className="text-white">{selectedText.strokeWidth || 0}px</span></div><input type="range" min="0" max="10" step="0.5" value={selectedText.strokeWidth || 0} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { strokeWidth: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
               <div className="flex gap-2 pt-1">
                 {['transparent', '#000000', '#FFFFFF', '#EF4444', '#F59E0B'].map((color) => (
-                  <button key={color} onClick={() => updateText(selectedText.id, { stroke: color })} className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.stroke === color ? 'border-white scale-125' : 'border-zinc-700 hover:scale-110'}`} style={color === 'transparent' ? { backgroundImage: 'repeating-conic-gradient(#3f3f46 0% 25%, transparent 0% 50%)', backgroundSize: '8px 8px' } : { backgroundColor: color }} />
+                  <button key={color} onClick={() => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { stroke: color }); }} className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.stroke === color ? 'border-white scale-125' : 'border-zinc-700 hover:scale-110'}`} style={color === 'transparent' ? { backgroundImage: 'repeating-conic-gradient(#3f3f46 0% 25%, transparent 0% 50%)', backgroundSize: '8px 8px' } : { backgroundColor: color }} />
                 ))}
               </div>
             </div>
 
             <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Shadow & Glow</h4>
-              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Blur Amount</label><span className="text-white">{selectedText.shadowBlur || 0}</span></div><input type="range" min="0" max="50" value={selectedText.shadowBlur || 0} onChange={(e) => updateText(selectedText.id, { shadowBlur: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Shadow & Glow Positioning</h4>
+              <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-medium text-zinc-300"><label>Blur Amount</label><span className="text-white">{selectedText.shadowBlur || 0}</span></div><input type="range" min="0" max="50" value={selectedText.shadowBlur || 0} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { shadowBlur: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5"><div className="flex justify-between text-[10px] text-zinc-400"><label>Offset X</label><span>{selectedText.shadowOffsetX || 0}</span></div><input type="range" min="-30" max="30" value={selectedText.shadowOffsetX || 0} onChange={(e) => updateText(selectedText.id, { shadowOffsetX: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
-                <div className="space-y-1.5"><div className="flex justify-between text-[10px] text-zinc-400"><label>Offset Y</label><span>{selectedText.shadowOffsetY || 0}</span></div><input type="range" min="-30" max="30" value={selectedText.shadowOffsetY || 0} onChange={(e) => updateText(selectedText.id, { shadowOffsetY: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+                <div className="space-y-1.5"><div className="flex justify-between text-[10px] text-zinc-400"><label>Offset X</label><span>{selectedText.shadowOffsetX || 0}</span></div><input type="range" min="-30" max="30" value={selectedText.shadowOffsetX || 0} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { shadowOffsetX: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
+                <div className="space-y-1.5"><div className="flex justify-between text-[10px] text-zinc-400"><label>Offset Y</label><span>{selectedText.shadowOffsetY || 0}</span></div><input type="range" min="-30" max="30" value={selectedText.shadowOffsetY || 0} onMouseDown={() => useEditorStore.getState().saveHistory()} onTouchStart={() => useEditorStore.getState().saveHistory()} onChange={(e) => updateText(selectedText.id, { shadowOffsetY: Number(e.target.value) })} className="w-full accent-blue-500" /></div>
               </div>
               <div className="flex gap-3 pt-3">
-                <button onClick={() => updateText(selectedText.id, { shadowColor: '#000000' })} className={`flex-1 py-2 text-xs font-medium rounded-xl border transition-all ${selectedText.shadowColor === '#000000' ? 'bg-zinc-800 border-zinc-500 text-white shadow-md' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>Dark Shadow</button>
-                <button onClick={() => updateText(selectedText.id, { shadowColor: '#FFFFFF' })} className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${selectedText.shadowColor === '#FFFFFF' ? 'bg-white border-white text-black shadow-md' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>Light Glow</button>
+                <button onClick={() => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { shadowColor: '#000000' }); }} className={`flex-1 py-2 text-xs font-medium rounded-xl border transition-all ${selectedText.shadowColor === '#000000' ? 'bg-zinc-800 border-zinc-500 text-white shadow-md' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>Dark Shadow</button>
+                <button onClick={() => { useEditorStore.getState().saveHistory(); updateText(selectedText.id, { shadowColor: '#FFFFFF' }); }} className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all ${selectedText.shadowColor === '#FFFFFF' ? 'bg-white border-white text-black shadow-md' : 'border-white/10 text-zinc-400 hover:bg-white/5'}`}>Light Glow</button>
               </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* --- GLOSSY TABS FOOTER --- */}
       <div className="flex gap-2 p-3 bg-black/60 backdrop-blur-2xl border-t border-white/10 shrink-0 z-20 pb-5 md:pb-3">
         <button onClick={() => setActiveTab('bg')} className={`flex-1 flex flex-col justify-center items-center gap-1.5 py-3 rounded-2xl transition-all duration-300 ${activeTab === 'bg' ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-105' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>
           <Palette size={20} />
