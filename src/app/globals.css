@@ -1,13 +1,20 @@
-/* লোকাল ফন্ট ফ্যামিলি ডিক্লেয়ারেশন (Mont Blanc) */
+/* 1. Imports must be at the very top */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600&family=Inter:wght@300;400;600&family=Montserrat:wght@300;500;700&family=Playfair+Display:ital,wght@0,400;0,700&display=swap');
+@import "tailwindcss";
+
+/* 2. Custom Fonts */
 @font-face {
   font-family: 'Mont Blanc';
-  src: url('/fonts/Mont Blanc Regular.otf') format('opentype');
+  src: url('/fonts/MontBlancLight.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-/* অন্যান্য প্রিমিয়াম গুগল ফন্টসমূহ */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600&family=Inter:wght@300;400;600&family=Montserrat:wght@300;500;700&family=Playfair+Display:ital,wght@0,400;0,700&display=swap');
-
-@import "tailwindcss";
+/* 3. Canvas Rendering Quality */
+canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}

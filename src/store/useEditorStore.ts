@@ -37,7 +37,13 @@ interface EditorState {
   selectedTextId: string | null;
   isLayersOpen: boolean;
   isTypingOverlayOpen: boolean;
-  isExportModalOpen: boolean; // এক্সপোর্ট মোডাল স্টেট
+  isExportModalOpen: boolean;
+  
+  // নতুন যুক্ত করা ভেরিয়েবলগুলো (এরর ফিক্স করার জন্য)
+  aspectRatio: string;
+  setAspectRatio: (ratio: string) => void;
+  saveHistory: () => void;
+
   setLayersOpen: (isOpen: boolean) => void;
   setTypingOverlayOpen: (isOpen: boolean) => void;
   setExportModalOpen: (isOpen: boolean) => void;
@@ -69,6 +75,12 @@ export const useEditorStore = create<EditorState>((set) => ({
   isLayersOpen: false,
   isTypingOverlayOpen: false,
   isExportModalOpen: false,
+  
+  // ডিফল্ট ভ্যালু (এরর ফিক্স করার জন্য)
+  aspectRatio: '9:16',
+  setAspectRatio: (ratio) => set({ aspectRatio: ratio }),
+  saveHistory: () => { /* Undo/Redo history logic will go here */ },
+
   texts: [
     {
       id: '1',

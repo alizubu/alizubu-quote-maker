@@ -8,12 +8,12 @@ import Konva from 'konva';
 import { Check } from 'lucide-react';
 
 const CanvasArea = () => {
-  const { 
+  const {
     bgColor, bgImage, bgBlur, bgBrightness, customFonts,
     texts, updateText, setSelectedText, selectedTextId,
     isTypingOverlayOpen, setTypingOverlayOpen
   } = useEditorStore();
-  
+
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
   const [localTextValue, setLocalTextValue] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,21 +42,21 @@ const CanvasArea = () => {
     const handleSafeDownload = (e: Event) => {
       const customEvent = e as CustomEvent;
       const targetWidth = customEvent.detail?.targetWidth || 1080; // মোডাল থেকে আসা নির্দিষ্ট উইডথ
-      
+
       if (stageRef.current) {
         setSelectedText(null); // সিলেকশন বক্স রিমুভ
-        
+
         setTimeout(() => {
           const currentScale = stageRef.current.scaleX() || 1;
           // স্ক্রিন সাইজ ও টার্গেট সাইজের উপর ভিত্তি করে নিখুঁত পিক্সেল রেশিও নির্ণয়
           const safePixelRatio = targetWidth / (1080 * currentScale);
 
           try {
-            const dataURL = stageRef.current.toDataURL({ 
+            const dataURL = stageRef.current.toDataURL({
               pixelRatio: safePixelRatio,
-              mimeType: 'image/png' 
+              mimeType: 'image/png'
             });
-            
+
             const link = document.createElement('a');
             link.download = `StoryMaker_${targetWidth}p_${Date.now()}.png`;
             link.href = dataURL;
@@ -91,7 +91,7 @@ const CanvasArea = () => {
     }
   }, [selectedTextId, texts, isTypingOverlayOpen]);
 
-  const scale = (stageSize.width / 1080) || 1; 
+  const scale = (stageSize.width / 1080) || 1;
 
   const handleDeselect = (e: any) => {
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background';
@@ -125,7 +125,7 @@ const CanvasArea = () => {
           <Layer>
             <Rect width={1080} height={1920} fill={bgColor} name="background" />
             {image && <KonvaImage ref={imageRef} image={image} name="background" {...imageProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />}
-            
+
             {texts.map((textObj) => {
               if (!textObj.visible) return null;
               const premiumFontStack = `${textObj.fontFamily}, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
@@ -153,7 +153,7 @@ const CanvasArea = () => {
             })}
 
             {selectedTextId && !isTypingOverlayOpen && (
-              <Transformer 
+              <Transformer
                 ref={trRef} boundBoxFunc={(oldBox, newBox) => newBox.width < 50 || newBox.height < 50 ? oldBox : newBox}
                 enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
                 borderStroke="#3b82f6" anchorStroke="#3b82f6" anchorFill="#ffffff" anchorSize={14} borderDash={[4, 4]} cornerRadius={5}
