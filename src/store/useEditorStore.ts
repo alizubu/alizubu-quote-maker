@@ -36,7 +36,9 @@ interface EditorState {
   customFonts: CustomFont[];
   selectedTextId: string | null;
   isLayersOpen: boolean;
+  isTypingOverlayOpen: boolean; // ডাবল-ট্যাপ টাইপিং ওভারলে
   setLayersOpen: (isOpen: boolean) => void;
+  setTypingOverlayOpen: (isOpen: boolean) => void;
   setBgColor: (color: string) => void;
   setBgImage: (url: string | null) => void;
   setBgBlur: (blur: number) => void;
@@ -52,6 +54,7 @@ interface EditorState {
   toggleVisibility: (id: string) => void;
   toggleLock: (id: string) => void;
   addCustomFont: (name: string, url: string) => void;
+  loadProject: (projectData: any) => void; // প্রজেক্ট লোড করার ফাংশন
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -62,12 +65,13 @@ export const useEditorStore = create<EditorState>((set) => ({
   selectedTextId: null,
   customFonts: [],
   isLayersOpen: false,
+  isTypingOverlayOpen: false,
   texts: [
     {
       id: '1',
       text: '"The only way to do great work\nis to love what you do." ✨',
       fontSize: 45,
-      fontFamily: "'Mont Blanc', sans-serif", // ডিফল্ট ফন্ট Mont Blanc সেট করা হলো
+      fontFamily: "'Playfair Display', serif",
       fontWeight: 'normal',
       fill: '#FFFFFF',
       x: 80,
@@ -87,6 +91,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   ],
 
   setLayersOpen: (isOpen) => set({ isLayersOpen: isOpen }),
+  setTypingOverlayOpen: (isOpen) => set({ isTypingOverlayOpen: isOpen }),
   setBgColor: (color) => set({ bgColor: color }),
   setBgImage: (url) => set({ bgImage: url }),
   setBgBlur: (blur) => set({ bgBlur: blur }),
@@ -94,72 +99,28 @@ export const useEditorStore = create<EditorState>((set) => ({
   
   addText: (newText) =>
     set((state) => ({
-      texts: [
-        ...state.texts,
-        {
-          id: Date.now().toString(),
-          text: 'New Layer Text',
-          fontSize: 36,
-          fontFamily: "'Mont Blanc', sans-serif",
-          fontWeight: 'normal',
-          fill: '#FFFFFF',
-          x: 150,
-          y: 800,
-          align: 'left',
-          letterSpacing: 0,
-          lineHeight: 1.2,
-          shadowColor: '#000000',
-          shadowBlur: 0,
-          shadowOffsetX: 0,
-          shadowOffsetY: 0,
-          stroke: 'transparent',
-          strokeWidth: 0,
-          visible: true,
-          locked: false,
-          ...newText,
-        },
-      ],
+      texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#FFFFFF', x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
       selectedTextId: null,
     })),
 
-  updateText: (id, attrs) =>
-    set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)) })),
-  
-  deleteText: (id) =>
-    set((state) => ({ texts: state.texts.filter((t) => t.id !== id), selectedTextId: state.selectedTextId === id ? null : state.selectedTextId })),
-
-  duplicateText: (id) =>
-    set((state) => {
-      const source = state.texts.find((t) => t.id === id);
-      if (!source) return state;
-      const clone = { ...source, id: Date.now().toString(), x: source.x + 30, y: source.y + 30, locked: false };
-      return { texts: [...state.texts, clone] };
-    }),
-
+  updateText: (id, attrs) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)) })),
+  deleteText: (id) => set((state) => ({ texts: state.texts.filter((t) => t.id !== id), selectedTextId: state.selectedTextId === id ? null : state.selectedTextId })),
+  duplicateText: (id) => set((state) => { const source = state.texts.find((t) => t.id === id); if (!source) return state; const clone = { ...source, id: Date.now().toString(), x: source.x + 30, y: source.y + 30, locked: false }; return { texts: [...state.texts, clone] }; }),
   setSelectedText: (id) => set({ selectedTextId: id }),
-
-  moveLayerUp: (id) =>
-    set((state) => {
-      const index = state.texts.findIndex((t) => t.id === id);
-      if (index === -1 || index === state.texts.length - 1) return state;
-      const newTexts = [...state.texts];
-      [newTexts[index], newTexts[index + 1]] = [newTexts[index + 1], newTexts[index]];
-      return { texts: newTexts };
-    }),
-
-  moveLayerDown: (id) =>
-    set((state) => {
-      const index = state.texts.findIndex((t) => t.id === id);
-      if (index <= 0) return state;
-      const newTexts = [...state.texts];
-      [newTexts[index - 1], newTexts[index]] = [newTexts[index], newTexts[index - 1]];
-      return { texts: newTexts };
-    }),
-
-  centerTextOnCanvas: (id, canvasWidth, canvasHeight) =>
-    set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, x: canvasWidth / 2 - 200, y: canvasHeight / 2 } : t)) })),
-
+  moveLayerUp: (id) => set((state) => { const index = state.texts.findIndex((t) => t.id === id); if (index === -1 || index === state.texts.length - 1) return state; const newTexts = [...state.texts]; [newTexts[index], newTexts[index + 1]] = [newTexts[index + 1], newTexts[index]]; return { texts: newTexts }; }),
+  moveLayerDown: (id) => set((state) => { const index = state.texts.findIndex((t) => t.id === id); if (index <= 0) return state; const newTexts = [...state.texts]; [newTexts[index - 1], newTexts[index]] = [newTexts[index], newTexts[index - 1]]; return { texts: newTexts }; }),
+  centerTextOnCanvas: (id, canvasWidth, canvasHeight) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, x: canvasWidth / 2 - 200, y: canvasHeight / 2 } : t)) })),
   toggleVisibility: (id) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t)) })),
   toggleLock: (id) => set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, locked: !t.locked } : t)) })),
   addCustomFont: (name, url) => set((state) => ({ customFonts: [...state.customFonts, { name, url }] })),
+  
+  // প্রজেক্ট লোড করার লজিক
+  loadProject: (projectData) => set({
+    texts: projectData.texts || [],
+    bgColor: projectData.bgColor || '#000000',
+    bgImage: projectData.bgImage || null,
+    bgBlur: projectData.bgBlur || 0,
+    bgBrightness: projectData.bgBrightness || 0,
+    selectedTextId: null,
+  }),
 }));
