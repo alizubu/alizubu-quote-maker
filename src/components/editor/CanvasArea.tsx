@@ -1,21 +1,30 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer } from 'react-konva';
+import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from 'react-konva';
 import { useEditorStore } from '../../store/useEditorStore';
 import useImage from 'use-image';
 import Konva from 'konva';
 import { Check } from 'lucide-react';
 
+const aspectRatios: Record<string, { w: number, h: number }> = {
+  '9:16': { w: 1080, h: 1920 },
+  '1:1': { w: 1080, h: 1080 },
+  '4:5': { w: 1080, h: 1350 },
+  '16:9': { w: 1920, h: 1080 },
+};
+
 const CanvasArea = () => {
   const { 
-    bgColor, bgImage, bgBlur, bgBrightness, customFonts,
-    texts, updateText, setSelectedText, selectedTextId,
+    bgColor, bgImage, bgBlur, bgBrightness, customFonts, aspectRatio,
+    texts, updateText, setSelectedText, selectedTextId, saveHistory,
     isTypingOverlayOpen, setTypingOverlayOpen
   } = useEditorStore();
   
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
-  const [localTextValue, setLocalTextValue] = useState(""); // স্মুথ টাইপিংয়ের জন্য লোকাল স্টেট
+  const [localTextValue, setLocalTextValue] = useState("");
+  const [snapLines, setSnapLines] = useState<any[]>([]); // স্ন্যাপ গাইডলাইন স্টেট
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
   const imageRef = useRef<any>(null);
@@ -23,21 +32,23 @@ const CanvasArea = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [image] = useImage(bgImage || '', 'anonymous');
+  const targetW = aspectRatios[aspectRatio].w;
+  const targetH = aspectRatios[aspectRatio].h;
 
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
-        const scale = Math.min(clientWidth / 1080, clientHeight / 1920);
-        setStageSize({ width: 1080 * scale, height: 1920 * scale });
+        // Padding 20px added to not touch the borders
+        const scale = Math.min((clientWidth - 40) / targetW, (clientHeight - 40) / targetH);
+        setStageSize({ width: targetW * scale, height: targetH * scale });
       }
     };
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  }, [aspectRatio, targetW, targetH]);
 
-  // 4K Export
   useEffect(() => {
     const handleExport = () => {
       if (stageRef.current) {
@@ -46,7 +57,7 @@ const CanvasArea = () => {
           const hqPixelRatio = 3 / stageRef.current.scaleX();
           const dataURL = stageRef.current.toDataURL({ pixelRatio: hqPixelRatio, mimeType: 'image/png' });
           const link = document.createElement('a');
-          link.download = `StoryMaker-HQ-${Date.now()}.png`;
+          link.download = `StoryMaker-${aspectRatio.replace(':', 'x')}-${Date.now()}.png`;
           link.href = dataURL;
           document.body.appendChild(link);
           link.click();
@@ -56,7 +67,7 @@ const CanvasArea = () => {
     };
     window.addEventListener('export-story', handleExport);
     return () => window.removeEventListener('export-story', handleExport);
-  }, [setSelectedText]);
+  }, [setSelectedText, aspectRatio]);
 
   useEffect(() => { if (image && imageRef.current) imageRef.current.cache(); }, [image, bgBlur, bgBrightness]);
 
@@ -67,22 +78,17 @@ const CanvasArea = () => {
       if (selectedNode && currentLayerData && !currentLayerData.locked && currentLayerData.visible) {
         trRef.current.nodes([selectedNode]);
         trRef.current.getLayer().batchDraw();
-      } else {
-        trRef.current.nodes([]);
-      }
-    } else if (trRef.current) {
-      trRef.current.nodes([]); // টাইপিংয়ের সময় ট্রান্সফর্মার হাইড
-    }
+      } else trRef.current.nodes([]);
+    } else if (trRef.current) trRef.current.nodes([]);
   }, [selectedTextId, texts, isTypingOverlayOpen]);
 
-  const scale = (stageSize.width / 1080) || 1; 
+  const scale = (stageSize.width / targetW) || 1; 
 
   const handleDeselect = (e: any) => {
     const clickedOnEmpty = e.target === e.target.getStage() || e.target.name() === 'background';
     if (clickedOnEmpty) setSelectedText(null);
   };
 
-  // ডাবল ক্লিক / ডাবল ট্যাপ লজিক
   const handleDoubleTap = (id: string, currentText: string) => {
     setLocalTextValue(currentText);
     setSelectedText(id);
@@ -90,26 +96,53 @@ const CanvasArea = () => {
     setTimeout(() => textareaRef.current?.focus(), 100);
   };
 
-  // ওভারলে সেভ করে বন্ধ করা
   const closeTypingOverlay = () => {
-    if (selectedTextId) updateText(selectedTextId, { text: localTextValue });
+    if (selectedTextId) { saveHistory(); updateText(selectedTextId, { text: localTextValue }); }
     setTypingOverlayOpen(false);
   };
 
   let imageProps = {};
   if (image) {
-    const imgScale = Math.max(1080 / image.width, 1920 / image.height);
-    imageProps = { width: image.width * imgScale, height: image.height * imgScale, x: (1080 - image.width * imgScale) / 2, y: (1920 - image.height * imgScale) / 2 };
+    const imgScale = Math.max(targetW / image.width, targetH / image.height);
+    imageProps = { width: image.width * imgScale, height: image.height * imgScale, x: (targetW - image.width * imgScale) / 2, y: (targetH - image.height * imgScale) / 2 };
   }
+
+  // --- MAGNETIC SNAP LOGIC ---
+  const handleDragMove = (e: any) => {
+    const node = e.target;
+    const box = node.getClientRect({ skipTransform: false });
+    const centerX = node.x() + (node.width() * node.scaleX()) / 2;
+    const centerY = node.y() + (node.height() * node.scaleY()) / 2;
+    const snapThreshold = 30; // 30px distance to snap
+    const lines = [];
+
+    // Snap Vertical (X Center)
+    if (Math.abs(centerX - targetW / 2) < snapThreshold) {
+      node.x((targetW / 2) - (node.width() * node.scaleX()) / 2);
+      lines.push({ id: 'v', points: [targetW / 2, 0, targetW / 2, targetH] });
+    }
+    // Snap Horizontal (Y Center)
+    if (Math.abs(centerY - targetH / 2) < snapThreshold) {
+      node.y((targetH / 2) - (node.height() * node.scaleY()) / 2);
+      lines.push({ id: 'h', points: [0, targetH / 2, targetW, targetH / 2] });
+    }
+    setSnapLines(lines);
+  };
+
+  const handleDragEnd = (e: any, id: string) => {
+    setSnapLines([]); // ড্র্যাগ শেষ হলে লাইন মুছে ফেলা
+    saveHistory();    // হিস্ট্রি সেভ করা
+    updateText(id, { x: e.target.x(), y: e.target.y() });
+  };
 
   return (
     <div ref={containerRef} className="w-full h-full flex items-center justify-center bg-[#09090b] overflow-hidden relative">
       <style dangerouslySetInnerHTML={{ __html: customFonts.map(font => `@font-face { font-family: '${font.name}'; src: url('${font.url}'); }`).join('\n') }} />
 
-      <div className="shadow-2xl shadow-black/80 rounded-lg overflow-hidden relative border border-white/5">
-        <Stage width={stageSize.width || 1080} height={stageSize.height || 1920} scaleX={scale} scaleY={scale} onClick={handleDeselect} onTap={handleDeselect}>
+      <div className="shadow-2xl shadow-black/80 rounded-[4px] md:rounded-lg overflow-hidden relative border border-white/10 transition-all duration-300">
+        <Stage width={stageSize.width || targetW} height={stageSize.height || targetH} scaleX={scale} scaleY={scale} onClick={handleDeselect} onTap={handleDeselect}>
           <Layer>
-            <Rect width={1080} height={1920} fill={bgColor} name="background" />
+            <Rect width={targetW} height={targetH} fill={bgColor} name="background" />
             {image && <KonvaImage ref={imageRef} image={image} name="background" {...imageProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />}
             
             {texts.map((textObj) => {
@@ -120,15 +153,20 @@ const CanvasArea = () => {
                 <Text
                   key={textObj.id}
                   id={`text-${textObj.id}`}
-                  text={isTypingOverlayOpen && selectedTextId === textObj.id ? "" : textObj.text} // টাইপিংয়ের সময় ক্যানভাসের টেক্সট হাইড
+                  text={isTypingOverlayOpen && selectedTextId === textObj.id ? "" : textObj.text}
                   x={textObj.x} y={textObj.y} fontSize={textObj.fontSize} fontFamily={premiumFontStack}
                   fill={textObj.fill} align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight || 1.2}
                   draggable={!textObj.locked && !isTypingOverlayOpen}
                   onClick={() => setSelectedText(textObj.id)} onTap={() => setSelectedText(textObj.id)}
                   onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
-                  onDragEnd={(e: any) => updateText(textObj.id, { x: e.target.x(), y: e.target.y() })}
+                  
+                  // Snap Events
+                  onDragMove={handleDragMove}
+                  onDragEnd={(e) => handleDragEnd(e, textObj.id)}
+                  
                   onTransformEnd={(e: any) => {
                     const node = e.target; const scaleX = node.scaleX(); node.scaleX(1); node.scaleY(1);
+                    saveHistory();
                     updateText(textObj.id, { x: node.x(), y: node.y(), fontSize: Math.max(12, Math.round(textObj.fontSize * scaleX)) });
                   }}
                   shadowColor={textObj.shadowColor} shadowBlur={textObj.shadowBlur} shadowOffsetX={textObj.shadowOffsetX} shadowOffsetY={textObj.shadowOffsetY}
@@ -137,6 +175,11 @@ const CanvasArea = () => {
                 />
               );
             })}
+
+            {/* Render Snap Guidelines */}
+            {snapLines.map((line) => (
+              <Line key={line.id} points={line.points} stroke="#3b82f6" strokeWidth={3} dash={[10, 10]} opacity={0.8} />
+            ))}
 
             {selectedTextId && !isTypingOverlayOpen && (
               <Transformer 
@@ -149,22 +192,13 @@ const CanvasArea = () => {
         </Stage>
       </div>
 
-      {/* --- SMOOTH TYPING OVERLAY (Canva Style) --- */}
       {isTypingOverlayOpen && (
         <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-4 animate-in fade-in duration-200">
           <div className="flex justify-between items-center mb-6">
             <span className="text-white/50 text-sm font-medium uppercase tracking-widest">Edit Text</span>
-            <button onClick={closeTypingOverlay} className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-full font-semibold flex items-center gap-2 shadow-lg transition-transform active:scale-95">
-              <Check size={18} /> Done
-            </button>
+            <button onClick={closeTypingOverlay} className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-full font-semibold flex items-center gap-2 shadow-lg transition-transform active:scale-95"><Check size={18} /> Done</button>
           </div>
-          <textarea
-            ref={textareaRef}
-            value={localTextValue}
-            onChange={(e) => setLocalTextValue(e.target.value)}
-            className="flex-1 w-full bg-transparent text-white text-3xl text-center resize-none outline-none font-sans placeholder-white/20"
-            placeholder="Type your quote..."
-          />
+          <textarea ref={textareaRef} value={localTextValue} onChange={(e) => setLocalTextValue(e.target.value)} className="flex-1 w-full bg-transparent text-white text-3xl text-center resize-none outline-none font-sans placeholder-white/20" placeholder="Type your quote..." />
         </div>
       )}
     </div>
