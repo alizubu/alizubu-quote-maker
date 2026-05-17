@@ -33,12 +33,14 @@ const CanvasArea = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
+  // আল্ট্রা-হাই কোয়ালিটি ৪K এক্সপোর্ট লজিক
   useEffect(() => {
     const handleExport = () => {
       if (stageRef.current) {
         setSelectedText(null);
         setTimeout(() => {
-          const dataURL = stageRef.current.toDataURL({ pixelRatio: 3, mimeType: 'image/png' });
+          // pixelRatio: 4 সেট করায় ইমেজ ৪৩২০x৭৬৮০ পিক্সেলের এক্সট্রিম শার্প আউটপুট দিবে
+          const dataURL = stageRef.current.toDataURL({ pixelRatio: 4, mimeType: 'image/png' });
           const link = document.createElement('a');
           link.download = `Aesthetic-Story-${Date.now()}.png`;
           link.href = dataURL;
@@ -128,7 +130,8 @@ const CanvasArea = () => {
             {texts.map((textObj) => {
               if (!textObj.visible) return null;
 
-              const premiumFontStack = `${textObj.fontFamily}, -apple-system, BlinkMacSystemFont, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+              // ফন্ট অর্ডারে 'Mont Blanc' এবং iOS এর জন্য অ্যাপল ইমোজি স্ট্যাক সবার আগে হ্যান্ডেল করা হয়েছে 
+              const premiumFontStack = `${textObj.fontFamily}, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
 
               return (
                 <Text
@@ -142,7 +145,7 @@ const CanvasArea = () => {
                   fill={textObj.fill}
                   align={textObj.align}
                   letterSpacing={textObj.letterSpacing}
-                  lineHeight={textObj.lineHeight || 1.2} // লাইন স্পেসিং ক্যানভাসে রেন্ডার করা হলো
+                  lineHeight={textObj.lineHeight || 1.2}
                   draggable={!textObj.locked}
                   onClick={() => setSelectedText(textObj.id)}
                   onTap={() => setSelectedText(textObj.id)}
@@ -160,6 +163,8 @@ const CanvasArea = () => {
                       fontSize: Math.max(12, Math.round(textObj.fontSize * scaleX)),
                     });
                   }}
+                  // ইমোজি এবং টেক্সট শার্প রাখার অপ্টিমাইজেশন
+                  perfectDrawEnabled={true}
                   shadowColor={textObj.shadowColor}
                   shadowBlur={textObj.shadowBlur}
                   shadowOffsetX={textObj.shadowOffsetX}

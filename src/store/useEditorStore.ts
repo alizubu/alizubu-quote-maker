@@ -35,7 +35,7 @@ interface EditorState {
   texts: TextLayer[];
   customFonts: CustomFont[];
   selectedTextId: string | null;
-  isLayersOpen: boolean; // ড্রয়ার কন্ট্রোল
+  isLayersOpen: boolean;
   setLayersOpen: (isOpen: boolean) => void;
   setBgColor: (color: string) => void;
   setBgImage: (url: string | null) => void;
@@ -67,7 +67,7 @@ export const useEditorStore = create<EditorState>((set) => ({
       id: '1',
       text: '"The only way to do great work\nis to love what you do." ✨',
       fontSize: 45,
-      fontFamily: "'Playfair Display', serif",
+      fontFamily: "'Mont Blanc', sans-serif", // ডিফল্ট ফন্ট Mont Blanc সেট করা হলো
       fontWeight: 'normal',
       fill: '#FFFFFF',
       x: 80,
@@ -100,7 +100,7 @@ export const useEditorStore = create<EditorState>((set) => ({
           id: Date.now().toString(),
           text: 'New Layer Text',
           fontSize: 36,
-          fontFamily: 'sans-serif',
+          fontFamily: "'Mont Blanc', sans-serif",
           fontWeight: 'normal',
           fill: '#FFFFFF',
           x: 150,

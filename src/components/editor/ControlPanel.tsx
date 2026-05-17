@@ -43,7 +43,7 @@ const ControlPanel = () => {
   return (
     <div className="flex flex-col h-full select-none bg-[#0c0c0e]">
       
-      {/* --- SCROLLABLE WORKSPACE AREA (Guaranteed Scrolling) --- */}
+      {/* --- SCROLLABLE WORKSPACE AREA --- */}
       <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-5 custom-scrollbar">
 
         {/* TAB 1: BACKGROUND */}
@@ -81,7 +81,7 @@ const ControlPanel = () => {
           </div>
         )}
 
-        {/* EMPTY STATE FOR TAB 2 & 3 */}
+        {/* EMPTY STATE */}
         {(activeTab === 'edit' || activeTab === 'effects') && !selectedText && (
           <div className="h-full min-h-[150px] flex flex-col items-center justify-center border border-dashed border-zinc-800 rounded-xl text-zinc-500 text-xs text-center px-4 bg-zinc-950/30 gap-4 mt-4">
             <Sparkles size={24} className="text-zinc-700" />
@@ -94,15 +94,13 @@ const ControlPanel = () => {
         {activeTab === 'edit' && selectedText && (
           <div className="space-y-4 animate-in fade-in duration-200 pb-4">
             
-            {/* Quick Actions Array */}
             <div className="flex gap-2 bg-zinc-950 p-1.5 rounded-lg border border-zinc-800">
               <button onClick={() => centerTextOnCanvas(selectedText.id, 1080, 1920)} className="flex-1 flex items-center justify-center gap-1 py-1.5 text-[11px] text-zinc-300 hover:text-white bg-zinc-900 rounded transition-colors"><Focus size={13} /> Center</button>
               <div className="w-px bg-zinc-800 my-1 mx-1"></div>
-              <button onClick={() => moveLayerUp(selectedText.id)} className="px-3 text-zinc-400 hover:text-white bg-zinc-900 rounded" title="Move Up"><MoveUp size={14} /></button>
-              <button onClick={() => moveLayerDown(selectedText.id)} className="px-3 text-zinc-400 hover:text-white bg-zinc-900 rounded" title="Move Down"><MoveDown size={14} /></button>
+              <button onClick={() => moveLayerUp(selectedText.id)} className="px-3 text-zinc-400 hover:text-white bg-zinc-900 rounded"><MoveUp size={14} /></button>
+              <button onClick={() => moveLayerDown(selectedText.id)} className="px-3 text-zinc-400 hover:text-white bg-zinc-900 rounded"><MoveDown size={14} /></button>
             </div>
 
-            {/* Content Input (Compact) */}
             <textarea
               value={selectedText.text}
               onChange={(e) => updateText(selectedText.id, { text: e.target.value })}
@@ -110,9 +108,7 @@ const ControlPanel = () => {
               placeholder="Write quote here..."
             />
 
-            {/* Tool Grid */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Alignment */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-wider text-zinc-500">Align</label>
                 <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800">
@@ -125,7 +121,6 @@ const ControlPanel = () => {
                   ))}
                 </div>
               </div>
-              {/* Quick Colors */}
               <div className="space-y-1.5">
                 <label className="text-[10px] uppercase tracking-wider text-zinc-500">Color Palette</label>
                 <div className="flex gap-2 flex-wrap">
@@ -136,7 +131,6 @@ const ControlPanel = () => {
               </div>
             </div>
 
-            {/* Typography Section */}
             <div className="space-y-3 bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/50">
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-[10px] uppercase tracking-wider text-zinc-500">
@@ -144,8 +138,13 @@ const ControlPanel = () => {
                   <span className="text-blue-400 cursor-pointer flex items-center gap-1" onClick={() => fileInputRef.current?.click()}><UploadCloud size={11} /> Upload</span>
                 </div>
                 <input type="file" ref={fileInputRef} accept=".ttf,.otf,.woff" onChange={handleFontUpload} className="hidden" />
-                <select value={selectedText.fontFamily} onChange={(e) => updateText(selectedText.id, { fontFamily: e.target.value })} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:outline-none">
-                  <optgroup label="Custom Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
+                
+                <select value={selectedText.fontFamily} onChange={(e) => updateText(selectedText.id, { fontFamily: e.target.value })} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-white focus:outline-none">
+                  {/* কাস্টমাইজড লোকাল ফন্ট গ্রুপ */}
+                  <optgroup label="Permanent Files">
+                    <option value="'Mont Blanc'">Mont Blanc (Premium Local)</option>
+                  </optgroup>
+                  <optgroup label="Uploaded Custom Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
                   <optgroup label="Aesthetic Presets">
                     <option value="sans-serif">System Default</option>
                     <option value="'Playfair Display', serif">Playfair (Elegant)</option>
@@ -167,7 +166,6 @@ const ControlPanel = () => {
         {/* TAB 3: EFFECTS */}
         {activeTab === 'effects' && selectedText && (
           <div className="space-y-4 animate-in fade-in duration-200 pb-4">
-            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1"><div className="flex justify-between text-[11px] text-zinc-400"><label>Spacing</label><span>{selectedText.letterSpacing}px</span></div><input type="range" min="-5" max="30" value={selectedText.letterSpacing} onChange={(e) => updateText(selectedText.id, { letterSpacing: Number(e.target.value) })} className="w-full accent-white" /></div>
               <div className="space-y-1"><div className="flex justify-between text-[11px] text-zinc-400"><label>Line Height</label><span>{selectedText.lineHeight || 1.2}</span></div><input type="range" min="0.5" max="3" step="0.1" value={selectedText.lineHeight || 1.2} onChange={(e) => updateText(selectedText.id, { lineHeight: Number(e.target.value) })} className="w-full accent-white" /></div>
@@ -199,7 +197,7 @@ const ControlPanel = () => {
         )}
       </div>
 
-      {/* --- BOTTOM NAVIGATION TABS (Pixellab Style - Fixed at Bottom) --- */}
+      {/* --- BOTTOM NAVIGATION TABS --- */}
       <div className="flex gap-1 border-t border-zinc-900 bg-[#09090b] p-2 pb-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] z-20">
         <button onClick={() => setActiveTab('bg')} className={`flex-1 flex flex-col justify-center items-center gap-1.5 py-2.5 rounded-xl transition-all ${activeTab === 'bg' ? 'bg-zinc-900 text-white shadow-inner' : 'text-zinc-500 hover:text-zinc-300'}`}>
           <Palette size={18} />
