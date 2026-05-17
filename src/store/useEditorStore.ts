@@ -27,7 +27,6 @@ interface CustomFont {
   url: string;
 }
 
-// হিস্ট্রির জন্য স্ন্যাপশট স্ট্রাকচার
 interface HistorySnapshot {
   texts: TextLayer[];
   bgColor: string;
@@ -41,30 +40,23 @@ interface HistorySnapshot {
 }
 
 interface EditorState {
-  // ক্যাশ ব্যাকগ্রাউন্ড স্টেইটস
   bgColor: string;
   bgImage: string | null;
   bgBlur: number;
   bgBrightness: number;
-  bgScale: number;     // ছবির সাইজ (Zoom) কন্ট্রোল
-  bgX: number;         // ছবির ডানে-বামে পজিশন
-  bgY: number;         // ছবির উপরে-নিচে পজিশন
-  
+  bgScale: number;
+  bgX: number;
+  bgY: number;
   texts: TextLayer[];
   customFonts: CustomFont[];
   selectedTextId: string | null;
   aspectRatio: string;
-  
-  // উইন্ডো/ওভারলে স্টেইটস
   isLayersOpen: boolean;
   isTypingOverlayOpen: boolean;
   isExportModalOpen: boolean;
-
-  // Undo / Redo স্ট্যাকস
   past: HistorySnapshot[];
   future: HistorySnapshot[];
 
-  // অ্যাকশনসসমূহ
   setLayersOpen: (isOpen: boolean) => void;
   setTypingOverlayOpen: (isOpen: boolean) => void;
   setExportModalOpen: (isOpen: boolean) => void;
@@ -77,7 +69,6 @@ interface EditorState {
   setBgY: (y: number) => void;
   setAspectRatio: (ratio: string) => void;
   
-  // টেক্সট লেয়ার অপারেশনস
   addText: (text: Partial<TextLayer>) => void;
   updateText: (id: string, attrs: Partial<TextLayer>) => void;
   deleteText: (id: string) => void;
@@ -89,7 +80,6 @@ interface EditorState {
   toggleVisibility: (id: string) => void;
   toggleLock: (id: string) => void;
   
-  // হিস্ট্রি এবং ফন্ট লজিক
   saveHistory: () => void;
   undo: () => void;
   redo: () => void;
@@ -98,7 +88,6 @@ interface EditorState {
   initPersistentFonts: () => void;
 }
 
-// IndexedDB Helper (ফন্ট স্থায়ীভাবে ব্রাউজারে সেভ রাখার জন্য)
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('StoryMakerFontsDB', 1);
@@ -112,7 +101,6 @@ const openDB = (): Promise<IDBDatabase> => {
 
 export const useEditorStore = create<EditorState>((set, get) => {
   
-  // বর্তমান নিখুঁত অবস্থার স্ন্যাপশট নেয়ার ফাংশন
   const createSnapshot = (): HistorySnapshot => {
     const state = get();
     return {
@@ -129,13 +117,14 @@ export const useEditorStore = create<EditorState>((set, get) => {
   };
 
   return {
-    bgColor: '#000000',
+    // আপনার দেওয়া JSON অনুযায়ী ব্যাকগ্রাউন্ড ডিফল্ট সেটিং
+    bgColor: '#ffffff',
     bgImage: null,
     bgBlur: 0,
     bgBrightness: 0,
-    bgScale: 1,      // ডিফল্ট ছবির সাইজ স্কেল ১
-    bgX: 0,          // ডিফল্ট এক্স পজিশন ০
-    bgY: 0,          // ডিফল্ট ওয়া পজিশন ০
+    bgScale: 1,
+    bgX: 0,
+    bgY: 0,
     selectedTextId: null,
     customFonts: [],
     aspectRatio: '9:16',
@@ -144,71 +133,53 @@ export const useEditorStore = create<EditorState>((set, get) => {
     isExportModalOpen: false,
     past: [],
     future: [],
+    
+    // আপনার দেওয়া JSON অনুযায়ী ডিফল্ট টেক্সট লেয়ার
     texts: [
       {
         id: '1',
-        text: '"The only way to do great work\nis to love what you do." ✨',
-        fontSize: 45,
-        fontFamily: "'Playfair Display', serif",
+        text: 'Ye Husn Se \nBhare Chehere \nIttrate Bahut Hai',
+        fontSize: 74,
+        fontFamily: "'Mont Blanc Light', sans-serif",
         fontWeight: 'normal',
         fill: '#FFFFFF',
-        x: 80,
-        y: 1350,
+        x: 83.07801444021585,
+        y: 1137.3515248796152,
         align: 'left',
-        letterSpacing: 0,
-        lineHeight: 1.2,
+        letterSpacing: -2,
+        lineHeight: 1.5,
         shadowColor: '#000000',
-        shadowBlur: 10,
+        shadowBlur: 4,
         shadowOffsetX: 0,
         shadowOffsetY: 4,
-        stroke: 'transparent',
-        strokeWidth: 0,
+        stroke: '#000000',
+        strokeWidth: 0.5,
         visible: true,
-        locked: false,
-      },
+        locked: false
+      }
     ],
 
-    // প্রতিটি পরিবর্তনের আগে হিস্ট্রি সেভ করার লজিক
     saveHistory: () => {
       const current = createSnapshot();
-      set((state) => ({
-        past: [...state.past, current],
-        future: [], // নতুন কোনো কাজ করলে রিডু স্ট্যাক খালি হয়ে যাবে
-      }));
+      set((state) => ({ past: [...state.past, current], future: [] }));
     },
 
-    // ১. UNDO ফাংশনালিটি
     undo: () => {
       const { past, future } = get();
-      if (past.length === 0) return; // আগের কোনো হিস্ট্রি না থাকলে ব্যাক করবে না
-
+      if (past.length === 0) return;
       const previous = past[past.length - 1];
       const newPast = past.slice(0, past.length - 1);
       const currentSnapshot = createSnapshot();
-
-      set({
-        ...previous,
-        past: newPast,
-        future: [currentSnapshot, ...future],
-        selectedTextId: null, // রিসেট সিলেকশন
-      });
+      set({ ...previous, past: newPast, future: [currentSnapshot, ...future], selectedTextId: null });
     },
 
-    // ১. REDO ফাংশনালিটি
     redo: () => {
       const { past, future } = get();
       if (future.length === 0) return;
-
       const next = future[0];
       const newFuture = future.slice(1);
       const currentSnapshot = createSnapshot();
-
-      set({
-        ...next,
-        past: [...past, currentSnapshot],
-        future: newFuture,
-        selectedTextId: null,
-      });
+      set({ ...next, past: [...past, currentSnapshot], future: newFuture, selectedTextId: null });
     },
 
     setLayersOpen: (isOpen) => set({ isLayersOpen: isOpen }),
@@ -217,7 +188,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     
     setBgColor: (color) => { get().saveHistory(); set({ bgColor: color }); },
     setBgImage: (url) => { get().saveHistory(); set({ bgImage: url }); },
-    setBgBlur: (blur) => set({ bgBlur: blur }), // স্লাইডার ড্র্যাগ করার সময় যেন হিস্ট্রি জ্যাম না হয়
+    setBgBlur: (blur) => set({ bgBlur: blur }),
     setBgBrightness: (brightness) => set({ bgBrightness: brightness }),
     setBgScale: (scale) => set({ bgScale: scale }),
     setBgX: (x) => set({ bgX: x }),
@@ -227,16 +198,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
     addText: (newText) => {
       get().saveHistory();
       set((state) => ({
-        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#FFFFFF', x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
+        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
         selectedTextId: null,
       }));
     },
 
     updateText: (id, attrs) => {
-      // ড্র্যাগ করার সময় মাউস/টাচ ছাড়লে ফাইনাল পজিশন ট্র্যাক করতে হিস্ট্রি সেভ
-      if (attrs.x !== undefined || attrs.y !== undefined) {
-        // ড্র্যাগ শুরু বা শেষের পজিশন চেক করে সেভ করা হয় কম্পোনেন্ট লেভেলে
-      }
       set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)) }));
     },
 
@@ -287,23 +254,19 @@ export const useEditorStore = create<EditorState>((set, get) => {
     toggleVisibility: (id) => { get().saveHistory(); set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, visible: !t.visible } : t)) })); },
     toggleLock: (id) => { get().saveHistory(); set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, locked: !t.locked } : t)) })); },
 
-    // ৩. কাস্টম ফন্ট পার্মানেন্টলি ডাটাবেজে সেভ রাখার মেকানিজম
     addCustomFont: async (name, url, blob) => {
       set((state) => ({ customFonts: [...state.customFonts, { name, url }] }));
-      
-      // যদি ফাইলটি নতুন আপলোড হয়, তবে IndexedDB তে রাইট করো
       if (blob) {
         try {
           const db = await openDB();
           const tx = db.transaction('fonts', 'readwrite');
           tx.objectStore('fonts').put({ name, blob });
         } catch (e) {
-          console.error("Failed to save font to persistent IndexedDB", e);
+          console.error("Failed to save font", e);
         }
       }
     },
 
-    // ৩. অ্যাপ চালুর সময় ডাটাবেজ থেকে ফন্ট রি-হাইড্রেট করা
     initPersistentFonts: async () => {
       try {
         const db = await openDB();
@@ -322,10 +285,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
           });
         };
       } catch (e) {
-        console.log("No persistent fonts found or IndexedDB error");
+        console.log("No persistent fonts found");
       }
     },
 
-    loadProject: (projectData) => set({ texts: projectData.texts || [], bgColor: projectData.bgColor || '#000000', bgImage: projectData.bgImage || null, bgBlur: projectData.bgBlur || 0, bgBrightness: projectData.bgBrightness || 0, bgScale: projectData.bgScale || 1, bgX: projectData.bgX || 0, bgY: projectData.bgY || 0, selectedTextId: null }),
+    loadProject: (projectData) => set({ texts: projectData.texts || [], bgColor: projectData.bgColor || '#ffffff', bgImage: projectData.bgImage || null, bgBlur: projectData.bgBlur || 0, bgBrightness: projectData.bgBrightness || 0, bgScale: projectData.bgScale || 1, bgX: projectData.bgX || 0, bgY: projectData.bgY || 0, selectedTextId: null }),
   };
 });

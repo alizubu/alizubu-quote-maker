@@ -2,15 +2,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600&family=Inter:wght@300;400;600&family=Montserrat:wght@300;500;700&family=Playfair+Display:ital,wght@0,400;0,700&display=swap');
 @import "tailwindcss";
 
-/* 2. Custom Fonts */
+/* Custom Fonts */
 @font-face {
-  font-family: 'Mont Blanc';
+  font-family: 'Mont Blanc Light';
   src: url('/fonts/MontBlancLight.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
-
 /* 3. Canvas Rendering Quality */
 canvas {
   image-rendering: -moz-crisp-edges;

@@ -218,8 +218,9 @@ const ControlPanel = () => {
                 <input type="file" ref={fileInputRef} accept=".ttf,.otf,.woff" onChange={handleFontUpload} className="hidden" />
                 <select value={selectedText.fontFamily} onChange={(e) => { saveH(); updateText(selectedText.id, { fontFamily: e.target.value }); }} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-blue-500">
                   <optgroup label="Saved Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
-                  <optgroup label="Presets">
-                    <option value="'Mont Blanc', sans-serif">Mont Blanc (Premium)</option>
+                  <optgroup label="Aesthetic Presets">
+                            {/* এই লাইনটি আপডেট করুন */}
+                    <option value="'Mont Blanc Light', sans-serif">Mont Blanc Light (Premium)</option>
                     <option value="sans-serif">System Default</option>
                     <option value="'Playfair Display', serif">Playfair (Elegant)</option>
                     <option value="'Cinzel', serif">Cinzel (Luxury)</option>
