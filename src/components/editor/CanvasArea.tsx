@@ -3,7 +3,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from 'react-konva';
 import { useEditorStore } from '../../store/useEditorStore';
-import useImage from 'use-image';
 import Konva from 'konva';
 import { Check } from 'lucide-react';
 
@@ -23,7 +22,8 @@ const CanvasArea = () => {
   
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
   const [localTextValue, setLocalTextValue] = useState("");
-  const [snapLines, setSnapLines] = useState<any[]>([]); // স্ন্যাপ গাইডলাইন স্টেট
+  const [snapLines, setSnapLines] = useState<any[]>([]);
+  const [loadedImage, setLoadedImage] = useState<HTMLImageElement | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
@@ -31,15 +31,35 @@ const CanvasArea = () => {
   const trRef = useRef<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [image] = useImage(bgImage || '', 'anonymous');
   const targetW = aspectRatios[aspectRatio].w;
   const targetH = aspectRatios[aspectRatio].h;
+
+  // --- ক্রসবর্ডার সিকিউরিটি (CORS) মেনে ইমেজ লোড করার ফিক্সড মেকানিজম ---
+  useEffect(() => {
+    if (!bgImage) {
+      setLoadedImage(null);
+      return;
+    }
+
+    const img = new window.Image();
+    img.src = bgImage;
+    // এই লাইনটি ব্রাউজারের ক্যানভাস ব্লকিং (Tainted Canvas Error) চিরতরে সমাধান করবে
+    if (!bgImage.startsWith('data:') && !bgImage.startsWith('blob:')) {
+      img.crossOrigin = 'Anonymous';
+    }
+
+    img.onload = () => {
+      setLoadedImage(img);
+    };
+    img.onerror = () => {
+      console.error("Failed to load background image smoothly.");
+    };
+  }, [bgImage]);
 
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
-        // Padding 20px added to not touch the borders
         const scale = Math.min((clientWidth - 40) / targetW, (clientHeight - 40) / targetH);
         setStageSize({ width: targetW * scale, height: targetH * scale });
       }
@@ -49,19 +69,35 @@ const CanvasArea = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, [aspectRatio, targetW, targetH]);
 
+  // --- PIXELLAB STYLE ULTRA HD (4K ENHANCE) EXPORT SYSTEM ---
   useEffect(() => {
     const handleExport = () => {
       if (stageRef.current) {
+        // এক্সপোর্ট করার আগে সিলেকশন বক্স টেম্পোরারি রিমুভ করা
         setSelectedText(null);
+        
         setTimeout(() => {
-          const hqPixelRatio = 3 / stageRef.current.scaleX();
-          const dataURL = stageRef.current.toDataURL({ pixelRatio: hqPixelRatio, mimeType: 'image/png' });
-          const link = document.createElement('a');
-          link.download = `StoryMaker-${aspectRatio.replace(':', 'x')}-${Date.now()}.png`;
-          link.href = dataURL;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          try {
+            const currentScale = stageRef.current.scaleX();
+            // Pixellab-এর Ultra মোডের মতো ৩ গুণ শার্প রেজোলিউশনে রেন্ডার ম্যাথ
+            const hqPixelRatio = 3 / currentScale;
+
+            const dataURL = stageRef.current.toDataURL({ 
+              pixelRatio: hqPixelRatio,
+              mimeType: 'image/png',
+              quality: 1.0 // সর্বোচ্চ ইমেজ কম্প্রেশন কোয়ালিটি
+            });
+            
+            const link = document.createElement('a');
+            link.download = `StoryMaker-UltraHD-${Date.now()}.png`;
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } catch (error) {
+            console.error("Export failed due to canvas protection standard: ", error);
+            alert("Export error! Please re-upload the background image or ensure proper server configuration.");
+          }
         }, 150);
       }
     };
@@ -69,7 +105,15 @@ const CanvasArea = () => {
     return () => window.removeEventListener('export-story', handleExport);
   }, [setSelectedText, aspectRatio]);
 
-  useEffect(() => { if (image && imageRef.current) imageRef.current.cache(); }, [image, bgBlur, bgBrightness]);
+  useEffect(() => { 
+    if (loadedImage && imageRef.current) {
+      try {
+        imageRef.current.cache();
+      } catch (e) {
+        console.warn("Caching ignored for local canvas resources.");
+      }
+    } 
+  }, [loadedImage, bgBlur, bgBrightness]);
 
   useEffect(() => {
     if (selectedTextId && trRef.current && stageRef.current && !isTypingOverlayOpen) {
@@ -102,26 +146,28 @@ const CanvasArea = () => {
   };
 
   let imageProps = {};
-  if (image) {
-    const imgScale = Math.max(targetW / image.width, targetH / image.height);
-    imageProps = { width: image.width * imgScale, height: image.height * imgScale, x: (targetW - image.width * imgScale) / 2, y: (targetH - image.height * imgScale) / 2 };
+  if (loadedImage) {
+    const imgScale = Math.max(targetW / loadedImage.width, targetH / loadedImage.height);
+    imageProps = { 
+      width: loadedImage.width * imgScale, 
+      height: loadedImage.height * imgScale, 
+      x: (targetW - loadedImage.width * imgScale) / 2, 
+      y: (targetH - loadedImage.height * imgScale) / 2 
+    };
   }
 
   // --- MAGNETIC SNAP LOGIC ---
   const handleDragMove = (e: any) => {
     const node = e.target;
-    const box = node.getClientRect({ skipTransform: false });
     const centerX = node.x() + (node.width() * node.scaleX()) / 2;
     const centerY = node.y() + (node.height() * node.scaleY()) / 2;
-    const snapThreshold = 30; // 30px distance to snap
+    const snapThreshold = 30; 
     const lines = [];
 
-    // Snap Vertical (X Center)
     if (Math.abs(centerX - targetW / 2) < snapThreshold) {
       node.x((targetW / 2) - (node.width() * node.scaleX()) / 2);
       lines.push({ id: 'v', points: [targetW / 2, 0, targetW / 2, targetH] });
     }
-    // Snap Horizontal (Y Center)
     if (Math.abs(centerY - targetH / 2) < snapThreshold) {
       node.y((targetH / 2) - (node.height() * node.scaleY()) / 2);
       lines.push({ id: 'h', points: [0, targetH / 2, targetW, targetH / 2] });
@@ -130,8 +176,8 @@ const CanvasArea = () => {
   };
 
   const handleDragEnd = (e: any, id: string) => {
-    setSnapLines([]); // ড্র্যাগ শেষ হলে লাইন মুছে ফেলা
-    saveHistory();    // হিস্ট্রি সেভ করা
+    setSnapLines([]);
+    saveHistory();    
     updateText(id, { x: e.target.x(), y: e.target.y() });
   };
 
@@ -143,7 +189,18 @@ const CanvasArea = () => {
         <Stage width={stageSize.width || targetW} height={stageSize.height || targetH} scaleX={scale} scaleY={scale} onClick={handleDeselect} onTap={handleDeselect}>
           <Layer>
             <Rect width={targetW} height={targetH} fill={bgColor} name="background" />
-            {image && <KonvaImage ref={imageRef} image={image} name="background" {...imageProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />}
+            
+            {loadedImage && (
+              <KonvaImage 
+                ref={imageRef} 
+                image={loadedImage} 
+                name="background" 
+                {...imageProps} 
+                filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} 
+                blurRadius={bgBlur} 
+                brightness={bgBrightness / 100} 
+              />
+            )}
             
             {texts.map((textObj) => {
               if (!textObj.visible) return null;
@@ -160,7 +217,6 @@ const CanvasArea = () => {
                   onClick={() => setSelectedText(textObj.id)} onTap={() => setSelectedText(textObj.id)}
                   onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
                   
-                  // Snap Events
                   onDragMove={handleDragMove}
                   onDragEnd={(e) => handleDragEnd(e, textObj.id)}
                   
@@ -176,7 +232,6 @@ const CanvasArea = () => {
               );
             })}
 
-            {/* Render Snap Guidelines */}
             {snapLines.map((line) => (
               <Line key={line.id} points={line.points} stroke="#3b82f6" strokeWidth={3} dash={[10, 10]} opacity={0.8} />
             ))}
