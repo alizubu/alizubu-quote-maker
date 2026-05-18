@@ -7,27 +7,53 @@ import useImage from 'use-image';
 import Konva from 'konva';
 import { Check, Trash2, Maximize } from 'lucide-react';
 
-// --- ১. ইমজ রেন্ডারিং (Masking Support) ---
-const RenderImageNode = ({ layer, isTypingOverlayOpen, isSpacePressed, setSelectedLayer, updateLayer, handleSnap }: any) => {
+// --- ১. ইমজ রেন্ডারিং (Masking & Crop Support) ---
+const RenderImageNode = ({ layer, isTypingOverlayOpen, isSpacePressed, isShiftPressed, isCropMode, multiSelectedIds, setSelectedLayer, setMultiSelectedIds, updateLayer, handleSnap }: any) => {
   const [img] = useImage(layer.url, 'anonymous');
   
+  // Crop Logic
+  const cropProps = layer.cropArea && img ? {
+    crop: layer.cropArea,
+    width: layer.cropArea.width,
+    height: layer.cropArea.height
+  } : img ? { width: img.width, height: img.height } : {};
+
   return (
     <Group
       id={`layer-${layer.id}`} x={layer.x} y={layer.y}
       rotation={layer.rotation} scaleX={layer.scaleX} scaleY={layer.scaleY}
       draggable={!layer.locked && !isTypingOverlayOpen && !isSpacePressed}
-      onClick={() => { if(!isSpacePressed) setSelectedLayer(layer.id); }} 
-      onTap={() => { if(!isSpacePressed) setSelectedLayer(layer.id); }}
+      onClick={(e) => { 
+        e.cancelBubble = true; 
+        if(!isSpacePressed) {
+          if(isShiftPressed) {
+            const newSelection = multiSelectedIds.includes(layer.id) ? multiSelectedIds.filter((id: string) => id !== layer.id) : [...multiSelectedIds, layer.id];
+            setMultiSelectedIds(newSelection);
+            setSelectedLayer(null);
+          } else {
+            setSelectedLayer(layer.id);
+          }
+        } 
+      }} 
+      onTap={(e) => { e.cancelBubble = true; if(!isSpacePressed) setSelectedLayer(layer.id); }}
       onDragMove={handleSnap}
       onDragEnd={(e) => updateLayer(layer.id, { x: e.target.x(), y: e.target.y() })}
       onTransformEnd={(e) => {
         const node = e.target;
-        updateLayer(layer.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+        if (isCropMode && layer.cropArea) {
+          // ক্রপ বক্স রিসাইজ করা
+          const newCrop = { ...layer.cropArea, width: layer.cropArea.width * node.scaleX(), height: layer.cropArea.height * node.scaleY() };
+          updateLayer(layer.id, { cropArea: newCrop });
+          node.setAttrs({ scaleX: 1, scaleY: 1 }); // স্কেল রিসেট
+        } else {
+          updateLayer(layer.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+        }
       }}
       clipFunc={(ctx) => {
         if (!img) return;
         const maskShape = layer.maskShape || 'none';
-        const w = img.width; const h = img.height;
+        const w = layer.cropArea ? layer.cropArea.width : img.width; 
+        const h = layer.cropArea ? layer.cropArea.height : img.height;
         if (maskShape === 'circle') {
           ctx.arc(w / 2, h / 2, Math.min(w, h) / 2, 0, Math.PI * 2, false);
         } else if (maskShape === 'square') {
@@ -38,7 +64,7 @@ const RenderImageNode = ({ layer, isTypingOverlayOpen, isSpacePressed, setSelect
         }
       }}
     >
-      <KonvaImage image={img} opacity={layer.opacity} globalCompositeOperation={layer.blendMode as any} />
+      <KonvaImage image={img} {...cropProps} opacity={layer.opacity} globalCompositeOperation={layer.blendMode as any} />
     </Group>
   );
 };
@@ -47,6 +73,7 @@ export default function CanvasArea() {
   const { 
     bgColor, bgImage, bgBlur, bgBrightness, bgScale, bgX, bgY, customFonts,
     layers, updateLayer, setSelectedLayer, selectedLayerId,
+    multiSelectedIds, setMultiSelectedIds, isCropMode, // NEW
     isTypingOverlayOpen, setTypingOverlayOpen, initPersistentFonts,
     canvasWidth, canvasHeight,
     stageScale, stagePosition, setStageScale, setStagePosition, resetWorkspace
@@ -56,6 +83,7 @@ export default function CanvasArea() {
   const [localTextValue, setLocalTextValue] = useState("");
   const [snapLines, setSnapLines] = useState<{v: number | null, h: number | null}>({v: null, h: null});
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isShiftPressed, setIsShiftPressed] = useState(false); // NEW
   
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
@@ -67,10 +95,16 @@ export default function CanvasArea() {
 
   useEffect(() => { initPersistentFonts(); }, [initPersistentFonts]);
 
-  // Spacebar Pan Logic
+  // Spacebar Pan & Shift Multi-Select Logic
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.code === 'Space' && !isTypingOverlayOpen && document.activeElement?.tagName !== 'INPUT') { e.preventDefault(); setIsSpacePressed(true); } };
-    const handleKeyUp = (e: KeyboardEvent) => { if (e.code === 'Space') setIsSpacePressed(false); };
+    const handleKeyDown = (e: KeyboardEvent) => { 
+      if (e.key === 'Shift') setIsShiftPressed(true);
+      if (e.code === 'Space' && !isTypingOverlayOpen && document.activeElement?.tagName !== 'INPUT') { e.preventDefault(); setIsSpacePressed(true); } 
+    };
+    const handleKeyUp = (e: KeyboardEvent) => { 
+      if (e.key === 'Shift') setIsShiftPressed(false);
+      if (e.code === 'Space') setIsSpacePressed(false); 
+    };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
@@ -107,6 +141,7 @@ export default function CanvasArea() {
       const targetWidth = e.detail?.targetWidth || canvasWidth; 
       if (stageRef.current) {
         setSelectedLayer(null);
+        setMultiSelectedIds([]);
         setTimeout(() => {
           const pixelRatio = targetWidth / (canvasWidth * (stageRef.current.scaleX() || 1));
           const link = document.createElement('a');
@@ -118,21 +153,27 @@ export default function CanvasArea() {
     };
     window.addEventListener('trigger-safe-download', handleDownload);
     return () => window.removeEventListener('trigger-safe-download', handleDownload);
-  }, [setSelectedLayer, canvasWidth]);
+  }, [setSelectedLayer, setMultiSelectedIds, canvasWidth]);
 
   useEffect(() => { if (bgImg && bgImageRef.current) bgImageRef.current.cache(); }, [bgImg, bgBlur, bgBrightness]);
 
-  // Transformer Logic
+  // Transformer Logic (Updated for Multi-Select)
   useEffect(() => {
-    if (selectedLayerId && trRef.current && stageRef.current && !isTypingOverlayOpen) {
-      const node = stageRef.current.findOne(`#layer-${selectedLayerId}`);
-      const layerData = layers.find(l => l.id === selectedLayerId);
-      if (node && layerData && !layerData.locked && layerData.visible) {
-        trRef.current.nodes([node]);
+    const activeIds = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
+    if (activeIds.length > 0 && trRef.current && stageRef.current && !isTypingOverlayOpen) {
+      const nodes = activeIds.map(id => stageRef.current.findOne(`#layer-${id}`)).filter(Boolean);
+      const validNodes = nodes.filter(node => {
+        const l = layers.find(layer => layer.id === node.id().replace('layer-', ''));
+        return l && !l.locked && l.visible;
+      });
+      if (validNodes.length > 0) {
+        trRef.current.nodes(validNodes);
         trRef.current.getLayer().batchDraw();
-      } else trRef.current.nodes([]);
+      } else {
+        trRef.current.nodes([]);
+      }
     } else if (trRef.current) trRef.current.nodes([]);
-  }, [selectedLayerId, layers, isTypingOverlayOpen]);
+  }, [selectedLayerId, multiSelectedIds, layers, isTypingOverlayOpen]);
 
   const handleDoubleTap = (id: string, text: string) => { setLocalTextValue(text); setSelectedLayer(id); setTypingOverlayOpen(true); setTimeout(() => textareaRef.current?.focus(), 100); };
   const closeTypingOverlay = () => { if (selectedLayerId) updateLayer(selectedLayerId, { text: localTextValue } as any); setTypingOverlayOpen(false); };
@@ -153,6 +194,7 @@ export default function CanvasArea() {
   }
 
   const finalScale = ((stageSize.width / canvasWidth) || 1) * stageScale;
+  const activeIdsForTr = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
 
   return (
     <div ref={containerRef} className={`w-full h-full flex items-center justify-center bg-[#09090b] overflow-hidden relative ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}>
@@ -169,8 +211,8 @@ export default function CanvasArea() {
           ref={stageRef} width={stageSize.width || 360} height={stageSize.height || 640} 
           scaleX={finalScale} scaleY={finalScale} x={stagePosition.x} y={stagePosition.y} draggable={isSpacePressed} onWheel={handleWheel}
           onDragEnd={(e) => { if(e.target === e.target.getStage()) setStagePosition({ x: e.target.x(), y: e.target.y() }); }}
-          onClick={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) setSelectedLayer(null); }}
-          onTap={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) setSelectedLayer(null); }}
+          onClick={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
+          onTap={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
         >
           <Layer>
             <Rect width={canvasWidth} height={canvasHeight} fill={bgColor} name="bg" />
@@ -178,7 +220,7 @@ export default function CanvasArea() {
             
             {layers.map((layer) => {
               if (!layer.visible) return null;
-              if (layer.type === 'image') return <RenderImageNode key={layer.id} layer={layer as ImageLayer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} setSelectedLayer={setSelectedLayer} updateLayer={updateLayer} handleSnap={handleSnapMove} />;
+              if (layer.type === 'image') return <RenderImageNode key={layer.id} layer={layer as ImageLayer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} />;
               
               if (layer.type === 'text') {
                 const textObj = layer as TextLayer;
@@ -194,7 +236,19 @@ export default function CanvasArea() {
                     fill={textObj.isGradient ? undefined : textObj.fill} fillLinearGradientStartPoint={textObj.isGradient ? { x: 0, y: 0 } : undefined} fillLinearGradientEndPoint={textObj.isGradient ? { x: 0, y: textObj.fontSize * 3 } : undefined} fillLinearGradientColorStops={textObj.isGradient ? [0, textObj.gradientColors[0], 1, textObj.gradientColors[1]] : undefined}
                     align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight} shadowColor={textObj.shadowColor} shadowBlur={textObj.shadowBlur} shadowOffsetX={textObj.shadowOffsetX} shadowOffsetY={textObj.shadowOffsetY} stroke={textObj.stroke} strokeWidth={textObj.strokeWidth} fillAfterStrokeEnabled={textObj.strokeType === 'outer'}
                     draggable={!textObj.locked && !isTypingOverlayOpen && !isSpacePressed}
-                    onClick={() => { if(!isSpacePressed) setSelectedLayer(textObj.id); }} onTap={() => { if(!isSpacePressed) setSelectedLayer(textObj.id); }}
+                    onClick={(e) => { 
+                      e.cancelBubble = true; 
+                      if(!isSpacePressed) {
+                        if(isShiftPressed) {
+                          const newSelection = multiSelectedIds.includes(textObj.id) ? multiSelectedIds.filter(id => id !== textObj.id) : [...multiSelectedIds, textObj.id];
+                          setMultiSelectedIds(newSelection);
+                          setSelectedLayer(null);
+                        } else {
+                          setSelectedLayer(textObj.id);
+                        }
+                      } 
+                    }} 
+                    onTap={(e) => { e.cancelBubble = true; if(!isSpacePressed) setSelectedLayer(textObj.id); }}
                     onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
                     onDragMove={handleSnapMove} onDragEnd={(e) => { setSnapLines({ v: null, h: null }); updateLayer(textObj.id, { x: e.target.x(), y: e.target.y() }); }} onTransformEnd={(e) => { const node = e.target; updateLayer(textObj.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() }); }}
                   />
@@ -202,9 +256,20 @@ export default function CanvasArea() {
               }
               return null;
             })}
+            
             {snapLines.v !== null && <Line points={[snapLines.v, 0, snapLines.v, canvasHeight]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
             {snapLines.h !== null && <Line points={[0, snapLines.h, canvasWidth, snapLines.h]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
-            {selectedLayerId && !isTypingOverlayOpen && !isSpacePressed && <Transformer ref={trRef} boundBoxFunc={(oldBox, newBox) => newBox.width < 10 || newBox.height < 10 ? oldBox : newBox} borderStroke="#3b82f6" anchorStroke="#3b82f6" anchorFill="#ffffff" anchorSize={12} cornerRadius={5} />}
+            
+            {activeIdsForTr.length > 0 && !isTypingOverlayOpen && !isSpacePressed && (
+              <Transformer 
+                ref={trRef} 
+                enabledAnchors={isCropMode && activeIdsForTr.length === 1 ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : ['top-left', 'top-center', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-center', 'bottom-right']} 
+                boundBoxFunc={(oldBox, newBox) => newBox.width < 10 || newBox.height < 10 ? oldBox : newBox} 
+                borderStroke={isCropMode ? "#10b981" : "#3b82f6"} 
+                anchorStroke={isCropMode ? "#10b981" : "#3b82f6"} 
+                anchorFill="#ffffff" anchorSize={12} cornerRadius={5} 
+              />
+            )}
           </Layer>
         </Stage>
       </div>
