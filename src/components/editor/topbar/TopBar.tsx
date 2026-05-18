@@ -1,21 +1,24 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { Download, Layers, Save, FolderOpen, LayoutTemplate, X, Check } from 'lucide-react';
-import { useEditorStore } from '../../store/useEditorStore';
+import { Download, Layers, Save, FolderOpen, LayoutTemplate, X, Check, ImagePlus } from 'lucide-react';
+
+// --- ফিক্সড পাথ: ../../../ (কারণ এখন আমরা topbar ফোল্ডারের আরও গভীরে আছি) ---
+import { useEditorStore } from '../../../store/useEditorStore';
 
 const TopBar = () => {
   const { 
-    isLayersOpen, setLayersOpen, texts, bgColor, bgImage, bgBlur, 
-    bgBrightness, loadProject, setExportModalOpen, 
+    isLayersOpen, setLayersOpen, layers, bgColor, bgImage, bgBlur, 
+    bgBrightness, bgScale, bgX, bgY, loadProject, setExportModalOpen, 
     isRatioModalOpen, setRatioModalOpen, setCanvasSize, aspectRatioName,
-    canvasWidth, canvasHeight
+    canvasWidth, canvasHeight, addImageLayer
   } = useEditorStore();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stickerInputRef = useRef<HTMLInputElement>(null);
 
   const handleSaveProject = () => {
-    const projectData = { version: 1, texts, bgColor, bgImage, bgBlur, bgBrightness, canvasWidth, canvasHeight, aspectRatioName };
+    const projectData = { version: 2, layers, bgColor, bgImage, bgBlur, bgBrightness, bgScale, bgX, bgY, canvasWidth, canvasHeight, aspectRatioName };
     const blob = new Blob([JSON.stringify(projectData)], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -34,7 +37,7 @@ const TopBar = () => {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target?.result as string);
-        if (!data || typeof data !== 'object' || !data.texts) { throw new Error("Invalid format"); }
+        if (!data || typeof data !== 'object') { throw new Error("Invalid format"); }
         loadProject(data);
       } catch (err) {
         alert("Security Alert: Corrupted or malicious project file detected!");
@@ -44,7 +47,15 @@ const TopBar = () => {
     e.target.value = '';
   };
 
-  // সোশ্যাল মিডিয়া রেশিও লিস্ট
+  const handleStickerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      addImageLayer(url);
+    }
+    e.target.value = '';
+  };
+
   const ratios = [
     { name: 'TikTok / IG Story (9:16)', w: 1080, h: 1920, desc: 'Reels, Shorts, Stories' },
     { name: 'Instagram Square (1:1)', w: 1080, h: 1080, desc: 'Standard Feed Post' },
@@ -60,15 +71,21 @@ const TopBar = () => {
         
         {/* Left Menu Buttons */}
         <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto">
-          <button onClick={() => setLayersOpen(!isLayersOpen)} className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-white border border-white/10 transition-all shadow-lg active:scale-95">
+          <button onClick={() => setLayersOpen(!isLayersOpen)} className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-white border border-white/10 transition-all shadow-lg active:scale-95" title="Toggle Layers">
             <Layers size={18} />
           </button>
+          
           <button onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-white border border-white/10 transition-all shadow-lg active:scale-95" title="Open Project">
             <FolderOpen size={18} />
             <input type="file" ref={fileInputRef} accept=".alizubu,.json" onChange={handleLoadProject} className="hidden" />
           </button>
 
-          {/* Aspect Ratio Button */}
+          {/* New Add Sticker Button */}
+          <button onClick={() => stickerInputRef.current?.click()} className="p-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-white border border-white/10 transition-all shadow-lg active:scale-95" title="Add Image/Sticker">
+            <ImagePlus size={18} />
+            <input type="file" ref={stickerInputRef} accept="image/*" onChange={handleStickerUpload} className="hidden" />
+          </button>
+
           <button 
             onClick={() => setRatioModalOpen(true)} 
             className="hidden sm:flex items-center gap-2 px-3 py-2.5 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-md rounded-xl text-blue-400 border border-blue-500/20 transition-all shadow-lg active:scale-95"
@@ -78,7 +95,6 @@ const TopBar = () => {
           </button>
         </div>
 
-        {/* Center Canvas Size Text for Mobile */}
         <button onClick={() => setRatioModalOpen(true)} className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 backdrop-blur-md rounded-full text-blue-400 border border-blue-500/20 pointer-events-auto active:scale-95">
           <LayoutTemplate size={14} />
           <span className="text-[10px] font-bold uppercase">{aspectRatioName.split('(')[0].trim()}</span>

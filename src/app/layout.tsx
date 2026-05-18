@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Alizubu Quote Maker",
@@ -14,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     // suppressHydrationWarning দেওয়া হয়েছে যাতে next-themes এর কারণে কোনো ওয়ার্নিং না আসে
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable)}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
