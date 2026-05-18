@@ -3,61 +3,9 @@
 import React from 'react';
 import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
 import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
-// এখানে HexColorPicker এর বদলে HexAlphaColorPicker ব্যবহার করা হয়েছে যেন কালারের সাথেই Opacity কমানো যায়
-import { HexAlphaColorPicker } from 'react-colorful'; 
-import { StepperSlider } from './BackgroundPanel';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface ColorPickerPopupProps {
-  label: string;
-  color: string;
-  onChange: (c: string) => void;
-  onAction: () => void;
-}
-
-const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopupProps) => {
-  const presets = ['#FFFFFF', '#000000', '#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6', 'transparent'];
-  
-  // 'transparent' কে HexAlpha ফরম্যাটে কনভার্ট করা যেন পিকারটি ক্র্যাশ না করে
-  const displayColor = color === 'transparent' || !color ? '#ffffff00' : color;
-  
-  return (
-    <div className="flex items-center justify-between p-2.5 bg-zinc-100 dark:bg-black/40 rounded-xl border border-zinc-200/50 dark:border-white/5">
-      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 pl-2">{label}</span>
-      <Popover>
-        <PopoverTrigger asChild>
-          <button 
-            onClick={onAction} 
-            className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-700 shadow-md transition-transform active:scale-90 hover:scale-110 cursor-pointer" 
-            style={{ 
-              backgroundColor: color === 'transparent' ? '#e4e4e7' : color, 
-              backgroundImage: color === 'transparent' ? 'repeating-conic-gradient(#a1a1aa 0% 25%, transparent 0% 50%)' : '',
-              backgroundSize: '8px 8px'
-            }} 
-          />
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl z-50">
-           {/* Alpha Color Picker for Built-in Opacity */}
-           <HexAlphaColorPicker color={displayColor} onChange={onChange} />
-           <div className="grid grid-cols-4 gap-2 mt-4 w-full">
-             {presets.map(p => (
-               <button 
-                 key={p} 
-                 onClick={() => onChange(p)} 
-                 className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${color === p ? 'scale-110 border-blue-500 shadow-md' : 'border-zinc-200 dark:border-zinc-700 hover:scale-105'}`} 
-                 style={{ 
-                   backgroundColor: p === 'transparent' ? '#e4e4e7' : p, 
-                   backgroundImage: p === 'transparent' ? 'repeating-conic-gradient(#a1a1aa 0% 25%, transparent 0% 50%)' : '', 
-                   backgroundSize: '8px 8px' 
-                 }} 
-               />
-             ))}
-           </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
+// --- BackgroundPanel থেকে শেয়ার্ড কম্পোনেন্টগুলো ইম্পোর্ট করা হলো ---
+import { StepperSlider, ColorPickerPopup } from './BackgroundPanel';
 
 export default function TextPanel() {
   const { layers, selectedLayerId, updateLayer, setTypingOverlayOpen, saveHistory, customFonts } = useEditorStore();
@@ -128,6 +76,7 @@ export default function TextPanel() {
           </div>
         </div>
 
+        {/* Text Fill Popup */}
         <ColorPickerPopup 
           label="Text Fill Color" 
           color={selectedLayer.fill} 
@@ -155,6 +104,7 @@ export default function TextPanel() {
          
          <StepperSlider label="Stroke Thickness" value={selectedLayer.strokeWidth || 0} min={0} max={20} step={0.5} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { strokeWidth: v })} unit="px" />
          
+         {/* Stroke Color Popup */}
          <ColorPickerPopup 
            label="Stroke Color" 
            color={selectedLayer.stroke || 'transparent'} 
@@ -163,7 +113,7 @@ export default function TextPanel() {
          />
       </div>
 
-      {/* Shadow & Glow Engine (Newly Added) */}
+      {/* Shadow & Glow Engine */}
       <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
          <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Shadow & Glow</h4>
          
@@ -171,6 +121,7 @@ export default function TextPanel() {
          <StepperSlider label="Offset X (Horizontal)" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetX: v })} unit="px" />
          <StepperSlider label="Offset Y (Vertical)" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetY: v })} unit="px" />
          
+         {/* Shadow Color Popup */}
          <ColorPickerPopup 
            label="Shadow Color" 
            color={selectedLayer.shadowColor || 'transparent'} 

@@ -5,7 +5,11 @@ import { useEditorStore } from '../../../store/useEditorStore';
 import { Image as ImageIcon, Upload, Trash2, Sun, Moon, Monitor, Palette, Settings2 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
-// --- Shared Component: Stepper Slider (এটি TextPanel এবং ImagePanel এও ব্যবহৃত হয়, তাই ডিলিট করা যাবে না) ---
+// --- Shared Components for Popover & Color Picker ---
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HexAlphaColorPicker } from 'react-colorful';
+
+// --- Shared Component: Stepper Slider ---
 export const StepperSlider = ({ label, value, min, max, step = 1, onChange, onAction, unit = '' }: any) => {
   const handleDecrement = () => { if (value > min) { onAction(); onChange(Math.max(min, value - step)); } };
   const handleIncrement = () => { if (value < max) { onAction(); onChange(Math.min(max, value + step)); } };
@@ -24,6 +28,55 @@ export const StepperSlider = ({ label, value, min, max, step = 1, onChange, onAc
   );
 };
 
+// --- Shared Component: Smooth Color Picker Popup (With Opacity Support) ---
+export interface ColorPickerPopupProps {
+  label: string;
+  color: string;
+  onChange: (c: string) => void;
+  onAction: () => void;
+}
+
+export const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopupProps) => {
+  const presets = ['#FFFFFF', '#000000', '#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6', 'transparent'];
+  const displayColor = color === 'transparent' || !color ? '#ffffff00' : color;
+  
+  return (
+    <div className="flex items-center justify-between p-2.5 bg-zinc-100 dark:bg-black/40 rounded-xl border border-zinc-200/50 dark:border-white/5">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 pl-2">{label}</span>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button 
+            onClick={onAction} 
+            className="w-8 h-8 rounded-full border-2 border-white dark:border-zinc-700 shadow-md transition-transform active:scale-90 hover:scale-110 cursor-pointer" 
+            style={{ 
+              backgroundColor: color === 'transparent' ? '#e4e4e7' : color, 
+              backgroundImage: color === 'transparent' ? 'repeating-conic-gradient(#a1a1aa 0% 25%, transparent 0% 50%)' : '',
+              backgroundSize: '8px 8px'
+            }} 
+          />
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-auto p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl z-50">
+           <HexAlphaColorPicker color={displayColor} onChange={onChange} />
+           <div className="grid grid-cols-4 gap-2 mt-4 w-full">
+             {presets.map(p => (
+               <button 
+                 key={p} 
+                 onClick={() => onChange(p)} 
+                 className={`w-7 h-7 rounded-full border-2 transition-all cursor-pointer ${color === p ? 'scale-110 border-blue-500 shadow-md' : 'border-zinc-200 dark:border-zinc-700 hover:scale-105'}`} 
+                 style={{ 
+                   backgroundColor: p === 'transparent' ? '#e4e4e7' : p, 
+                   backgroundImage: p === 'transparent' ? 'repeating-conic-gradient(#a1a1aa 0% 25%, transparent 0% 50%)' : '', 
+                   backgroundSize: '8px 8px' 
+                 }} 
+               />
+             ))}
+           </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 export default function BackgroundPanel() {
   const { 
     bgColor, setBgColor, 
@@ -36,11 +89,9 @@ export default function BackgroundPanel() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Theme Toggle Engine
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Hydration mismatch রোধ করতে
   useEffect(() => setMounted(true), []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,36 +110,17 @@ export default function BackgroundPanel() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const presetColors = ['#ffffff', '#000000', '#f1f5f9', '#fefce8', '#fce7f3', '#dbeafe', '#e0e7ff', '#d1fae5', '#3b82f6', '#ec4899'];
-
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
       
-      {/* 🌙 App Appearance (Dark/Light Mode) Fixed 🌙 */}
+      {/* App Appearance */}
       <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-3">
          <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><Settings2 size={14}/> APP APPEARANCE</h4>
-         
-         {/* Mounted চেক দিয়েছি যেন রিফ্রেশে এরর না আসে */}
          {mounted ? (
            <div className="flex p-1 bg-zinc-100 dark:bg-black/40 rounded-xl relative">
-              <button 
-                onClick={() => setTheme('light')} 
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'light' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                 <Sun size={14} /> Light
-              </button>
-              <button 
-                onClick={() => setTheme('dark')} 
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'dark' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                 <Moon size={14} /> Dark
-              </button>
-              <button 
-                onClick={() => setTheme('system')} 
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'system' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
-              >
-                 <Monitor size={14} /> System
-              </button>
+              <button onClick={() => setTheme('light')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'light' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}><Sun size={14} /> Light</button>
+              <button onClick={() => setTheme('dark')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'dark' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}><Moon size={14} /> Dark</button>
+              <button onClick={() => setTheme('system')} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all z-10 ${theme === 'system' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}><Monitor size={14} /> System</button>
            </div>
          ) : (
            <div className="h-[36px] w-full bg-zinc-100 dark:bg-black/40 rounded-xl animate-pulse"></div>
@@ -98,25 +130,12 @@ export default function BackgroundPanel() {
       {/* Canvas Background Color */}
       <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-4">
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500 flex items-center gap-1.5"><Palette size={14} /> Canvas Background</h4>
-        
-        <div className="flex items-center gap-3">
-          <input 
-            type="color" 
-            value={bgColor} 
-            onChange={(e) => setBgColor(e.target.value)} 
-            className="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0 overflow-hidden" 
-          />
-          <div className="flex flex-1 flex-wrap gap-2">
-            {presetColors.map((color) => (
-              <button 
-                key={color} 
-                onClick={() => setBgColor(color)} 
-                className={`w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700 transition-transform ${bgColor === color ? 'scale-125 shadow-md border-blue-500' : 'hover:scale-110'}`} 
-                style={{ backgroundColor: color }} 
-              />
-            ))}
-          </div>
-        </div>
+        <ColorPickerPopup 
+          label="Background Color" 
+          color={bgColor} 
+          onAction={() => {}} 
+          onChange={(c) => setBgColor(c)} 
+        />
       </div>
 
       {/* Background Image & Filters */}
@@ -126,25 +145,11 @@ export default function BackgroundPanel() {
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
           
           <div className="flex gap-2">
-            <button 
-              onClick={() => fileInputRef.current?.click()} 
-              className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition-colors shadow-sm"
-            >
-              <Upload size={14} /> Upload Image
-            </button>
-            {bgImage && (
-              <button 
-                onClick={handleRemoveImage} 
-                className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-colors"
-                title="Remove Background Image"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
+            <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2 text-xs font-semibold transition-colors shadow-sm"><Upload size={14} /> Upload Image</button>
+            {bgImage && <button onClick={handleRemoveImage} className="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-colors"><Trash2 size={16} /></button>}
           </div>
         </div>
 
-        {/* Filters (Only show if image is uploaded) */}
         {bgImage && (
           <div className="space-y-4 pt-3 border-t border-zinc-100 dark:border-white/5">
              <StepperSlider label="Blur Radius" value={bgBlur} min={0} max={50} step={1} onAction={saveHistory} onChange={setBgBlur} unit="px" />
