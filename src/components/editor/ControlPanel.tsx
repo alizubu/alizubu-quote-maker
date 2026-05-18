@@ -73,7 +73,7 @@ const ControlPanel = () => {
   const saveH = () => useEditorStore.getState().saveHistory();
 
   return (
-    <div className="flex flex-col h-full select-none bg-gradient-to-b from-[#0c0c0e] to-[#050505] relative">
+    <div className="flex flex-col h-full select-none bg-gradient-to-b from-[#0c0c0e] to-[#050505] relative shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
       
       <div className="flex justify-between items-center px-5 py-3 border-b border-white/5 bg-black/20 shrink-0">
         <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest">History Engine</span>
@@ -163,30 +163,38 @@ const ControlPanel = () => {
                 </div>
               </div>
 
-              {/* NEW: CUSTOM COLOR PICKER AND GRADIENTS */}
+              {/* PIXELLAB STYLE COLOR & GRADIENT SECTION */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Color & Gradients</label>
-                <div className="flex gap-3 flex-wrap bg-white/5 p-3 rounded-xl border border-white/10 items-center">
+                <div className="flex gap-3 flex-wrap bg-white/5 p-3 rounded-xl border border-white/10 items-center justify-start">
                   
-                  {/* Native Color Picker (Any Color) */}
-                  <div className={`relative w-8 h-8 rounded-full border-2 overflow-hidden hover:scale-110 transition-transform ${!selectedText.isGradient ? 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50'}`}>
+                  {/* ১. সাদা এবং কালো কালার প্রিসেট */}
+                  {['#FFFFFF', '#000000'].map((color) => (
+                    <button 
+                      key={color} 
+                      onClick={() => { saveH(); updateText(selectedText.id, { fill: color, isGradient: false }); }} 
+                      className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.fill === color && !selectedText.isGradient ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50 hover:scale-110'}`} 
+                      style={{ backgroundColor: color }} 
+                    />
+                  ))}
+
+                  {/* ২. যেকোনো কালার চুজ করার অপশন (Color Wheel Style) */}
+                  <div 
+                    className={`relative w-8 h-8 rounded-full border-2 overflow-hidden hover:scale-110 transition-transform ${!selectedText.isGradient && selectedText.fill !== '#FFFFFF' && selectedText.fill !== '#000000' ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50'}`}
+                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                    title="Choose Custom Color"
+                  >
                     <input 
                       type="color" 
-                      value={selectedText.fill} 
+                      value={!selectedText.isGradient ? selectedText.fill : '#ffffff'} 
                       onChange={(e) => { saveH(); updateText(selectedText.id, { fill: e.target.value, isGradient: false }); }} 
-                      className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer"
-                      title="Choose Custom Color"
+                      className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer opacity-0"
                     />
                   </div>
 
-                  {/* Preset Solid Colors */}
-                  {['#FFFFFF', '#000000'].map((color) => (
-                    <button key={color} onClick={() => { saveH(); updateText(selectedText.id, { fill: color, isGradient: false }); }} className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.fill === color && !selectedText.isGradient ? 'border-blue-500 scale-110 shadow-md' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
-                  ))}
-
                   <div className="w-px h-6 bg-white/10 mx-1"></div>
 
-                  {/* Aesthetic Gradients */}
+                  {/* ৩. গ্রেডিয়েন্ট অপশন */}
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#f6d365', '#fda085'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#f6d365] to-[#fda085] ${selectedText.isGradient && selectedText.gradientColors[0] === '#f6d365' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Sunset Gradient" />
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#84fab0', '#8fd3f4'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#84fab0] to-[#8fd3f4] ${selectedText.isGradient && selectedText.gradientColors[0] === '#84fab0' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Ocean Gradient" />
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#a18cd1', '#fbc2eb'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#a18cd1] to-[#fbc2eb] ${selectedText.isGradient && selectedText.gradientColors[0] === '#a18cd1' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Purple Haze" />
