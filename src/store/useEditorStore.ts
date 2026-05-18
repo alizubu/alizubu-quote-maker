@@ -7,8 +7,8 @@ export interface TextLayer {
   fontFamily: string;
   fontWeight: string;
   fill: string;
-  isGradient: boolean; // গ্রেডিয়েন্ট চেক করার জন্য
-  gradientColors: [string, string]; // গ্রেডিয়েন্ট কালার অ্যারে
+  isGradient: boolean;
+  gradientColors: [string, string];
   x: number;
   y: number;
   align: 'left' | 'center' | 'right';
@@ -38,7 +38,9 @@ interface HistorySnapshot {
   bgScale: number;
   bgX: number;
   bgY: number;
-  aspectRatio: string;
+  canvasWidth: number;
+  canvasHeight: number;
+  aspectRatioName: string;
 }
 
 interface EditorState {
@@ -52,16 +54,26 @@ interface EditorState {
   texts: TextLayer[];
   customFonts: CustomFont[];
   selectedTextId: string | null;
-  aspectRatio: string;
+  
+  // ক্যানভাস সাইজ এবং রেশিও স্টেট
+  canvasWidth: number;
+  canvasHeight: number;
+  aspectRatioName: string;
+  
+  // পপআপ এবং উইন্ডো স্টেট
   isLayersOpen: boolean;
   isTypingOverlayOpen: boolean;
   isExportModalOpen: boolean;
+  isRatioModalOpen: boolean; // রেশিও পপআপের জন্য
+  
   past: HistorySnapshot[];
   future: HistorySnapshot[];
 
   setLayersOpen: (isOpen: boolean) => void;
   setTypingOverlayOpen: (isOpen: boolean) => void;
   setExportModalOpen: (isOpen: boolean) => void;
+  setRatioModalOpen: (isOpen: boolean) => void;
+  
   setBgColor: (color: string) => void;
   setBgImage: (url: string | null) => void;
   setBgBlur: (blur: number) => void;
@@ -69,7 +81,8 @@ interface EditorState {
   setBgScale: (scale: number) => void;
   setBgX: (x: number) => void;
   setBgY: (y: number) => void;
-  setAspectRatio: (ratio: string) => void;
+  
+  setCanvasSize: (width: number, height: number, ratioName: string) => void;
   
   addText: (text: Partial<TextLayer>) => void;
   updateText: (id: string, attrs: Partial<TextLayer>) => void;
@@ -114,7 +127,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
       bgScale: state.bgScale,
       bgX: state.bgX,
       bgY: state.bgY,
-      aspectRatio: state.aspectRatio,
+      canvasWidth: state.canvasWidth,
+      canvasHeight: state.canvasHeight,
+      aspectRatioName: state.aspectRatioName,
     };
   };
 
@@ -128,10 +143,17 @@ export const useEditorStore = create<EditorState>((set, get) => {
     bgY: 0,
     selectedTextId: null,
     customFonts: [],
-    aspectRatio: '9:16',
+    
+    // ডিফল্ট সাইজ (TikTok / IG Story 9:16)
+    canvasWidth: 1080,
+    canvasHeight: 1920,
+    aspectRatioName: 'TikTok / IG Story (9:16)',
+    
     isLayersOpen: false,
     isTypingOverlayOpen: false,
     isExportModalOpen: false,
+    isRatioModalOpen: false,
+    
     past: [],
     future: [],
     
@@ -187,6 +209,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     setLayersOpen: (isOpen) => set({ isLayersOpen: isOpen }),
     setTypingOverlayOpen: (isOpen) => set({ isTypingOverlayOpen: isOpen }),
     setExportModalOpen: (isOpen) => set({ isExportModalOpen: isOpen }),
+    setRatioModalOpen: (isOpen) => set({ isRatioModalOpen: isOpen }),
     
     setBgColor: (color) => { get().saveHistory(); set({ bgColor: color }); },
     setBgImage: (url) => { get().saveHistory(); set({ bgImage: url }); },
@@ -195,12 +218,16 @@ export const useEditorStore = create<EditorState>((set, get) => {
     setBgScale: (scale) => set({ bgScale: scale }),
     setBgX: (x) => set({ bgX: x }),
     setBgY: (y) => set({ bgY: y }),
-    setAspectRatio: (ratio) => { get().saveHistory(); set({ aspectRatio: ratio }); },
+    
+    setCanvasSize: (width, height, ratioName) => { 
+      get().saveHistory(); 
+      set({ canvasWidth: width, canvasHeight: height, aspectRatioName: ratioName, isRatioModalOpen: false }); 
+    },
 
     addText: (newText) => {
       get().saveHistory();
       set((state) => ({
-        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', isGradient: false, gradientColors: ['#f6d365', '#fda085'], x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
+        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', isGradient: false, gradientColors: ['#f6d365', '#fda085'], x: state.canvasWidth / 2 - 150, y: state.canvasHeight / 2, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
         selectedTextId: null,
       }));
     },
@@ -291,6 +318,19 @@ export const useEditorStore = create<EditorState>((set, get) => {
       }
     },
 
-    loadProject: (projectData) => set({ texts: projectData.texts || [], bgColor: projectData.bgColor || '#ffffff', bgImage: projectData.bgImage || null, bgBlur: projectData.bgBlur || 0, bgBrightness: projectData.bgBrightness || 0, bgScale: projectData.bgScale || 1, bgX: projectData.bgX || 0, bgY: projectData.bgY || 0, selectedTextId: null }),
+    loadProject: (projectData) => set({ 
+      texts: projectData.texts || [], 
+      bgColor: projectData.bgColor || '#ffffff', 
+      bgImage: projectData.bgImage || null, 
+      bgBlur: projectData.bgBlur || 0, 
+      bgBrightness: projectData.bgBrightness || 0, 
+      bgScale: projectData.bgScale || 1, 
+      bgX: projectData.bgX || 0, 
+      bgY: projectData.bgY || 0, 
+      canvasWidth: projectData.canvasWidth || 1080,
+      canvasHeight: projectData.canvasHeight || 1920,
+      aspectRatioName: projectData.aspectRatioName || 'TikTok / IG Story (9:16)',
+      selectedTextId: null 
+    }),
   };
 });

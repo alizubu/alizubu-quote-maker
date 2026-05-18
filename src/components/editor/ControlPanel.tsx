@@ -8,13 +8,7 @@ import {
   Undo2, Redo2, Maximize2, Minus, Plus 
 } from 'lucide-react';
 
-const StepperSlider = ({ 
-  label, value, min, max, step = 1, unit = "", 
-  onChange, onAction 
-}: { 
-  label: string, value: number, min: number, max: number, step?: number, unit?: string,
-  onChange: (val: number) => void, onAction: () => void 
-}) => {
+const StepperSlider = ({ label, value, min, max, step = 1, unit = "", onChange, onAction }: any) => {
   const handleDecrement = () => { onAction(); onChange(Math.max(min, Number((value - step).toFixed(2)))); };
   const handleIncrement = () => { onAction(); onChange(Math.min(max, Number((value + step).toFixed(2)))); };
   return (
@@ -37,24 +31,15 @@ const ControlPanel = () => {
     texts, selectedTextId, updateText, addText, bgColor, setBgColor, 
     bgImage, setBgImage, customFonts, addCustomFont, bgBlur, setBgBlur, 
     bgBrightness, setBgBrightness, bgScale, setBgScale, bgX, setBgX, bgY, setBgY,
-    moveLayerUp, moveLayerDown, centerTextOnCanvas, setTypingOverlayOpen, aspectRatio,
-    undo, redo, past, future 
+    moveLayerUp, moveLayerDown, centerTextOnCanvas, setTypingOverlayOpen,
+    undo, redo, past, future, 
+    canvasWidth, canvasHeight // স্টোর থেকে সরাসরি সাইজ ইমপোর্ট
   } = useEditorStore();
   
   const [activeTab, setActiveTab] = useState<'bg' | 'edit' | 'effects'>('edit');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedText = texts.find((t) => t.id === selectedTextId);
   const bgColors = ['transparent', '#000000', '#18181b', '#27272a', '#ffffff', '#1e1e1e', '#0f172a', '#450a0a'];
-
-  const aspectRatios: Record<string, { w: number, h: number }> = {
-    '9:16': { w: 1080, h: 1920 },
-    '1:1': { w: 1080, h: 1080 },
-    '4:5': { w: 1080, h: 1350 },
-    '16:9': { w: 1920, h: 1080 },
-  };
-
-  const currentCanvasWidth = aspectRatios[aspectRatio]?.w || 1080;
-  const currentCanvasHeight = aspectRatios[aspectRatio]?.h || 1920;
 
   const handleFontUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -90,7 +75,6 @@ const ControlPanel = () => {
 
       <div className="flex-1 overflow-y-auto min-h-0 p-5 space-y-6 custom-scrollbar">
 
-        {/* TAB 1: BACKGROUND */}
         {activeTab === 'bg' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2"><Palette size={14} className="text-blue-400"/> Canvas Background</h3>
@@ -130,12 +114,11 @@ const ControlPanel = () => {
           </div>
         )}
 
-        {/* TAB 2: TEXT EDIT */}
         {activeTab === 'edit' && selectedText && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
             
             <div className="flex gap-2 bg-white/5 p-1.5 rounded-xl border border-white/10 shadow-sm">
-              <button onClick={() => centerTextOnCanvas(selectedText.id, currentCanvasWidth, currentCanvasHeight)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-zinc-300 hover:bg-white/10 rounded-lg transition-colors"><Focus size={14} /> Center</button>
+              <button onClick={() => centerTextOnCanvas(selectedText.id, canvasWidth, canvasHeight)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-zinc-300 hover:bg-white/10 rounded-lg transition-colors"><Focus size={14} /> Center</button>
               <div className="w-px bg-white/10 my-1 mx-1"></div>
               <button onClick={() => moveLayerUp(selectedText.id)} className="px-4 text-zinc-400 hover:text-white rounded-lg transition-colors"><MoveUp size={16} /></button>
               <button onClick={() => moveLayerDown(selectedText.id)} className="px-4 text-zinc-400 hover:text-white rounded-lg transition-colors"><MoveDown size={16} /></button>
@@ -163,38 +146,19 @@ const ControlPanel = () => {
                 </div>
               </div>
 
-              {/* PIXELLAB STYLE COLOR & GRADIENT SECTION */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Color & Gradients</label>
                 <div className="flex gap-3 flex-wrap bg-white/5 p-3 rounded-xl border border-white/10 items-center justify-start">
-                  
-                  {/* ১. সাদা এবং কালো কালার প্রিসেট */}
                   {['#FFFFFF', '#000000'].map((color) => (
-                    <button 
-                      key={color} 
-                      onClick={() => { saveH(); updateText(selectedText.id, { fill: color, isGradient: false }); }} 
-                      className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.fill === color && !selectedText.isGradient ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50 hover:scale-110'}`} 
-                      style={{ backgroundColor: color }} 
-                    />
+                    <button key={color} onClick={() => { saveH(); updateText(selectedText.id, { fill: color, isGradient: false }); }} className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.fill === color && !selectedText.isGradient ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
                   ))}
 
-                  {/* ২. যেকোনো কালার চুজ করার অপশন (Color Wheel Style) */}
-                  <div 
-                    className={`relative w-8 h-8 rounded-full border-2 overflow-hidden hover:scale-110 transition-transform ${!selectedText.isGradient && selectedText.fill !== '#FFFFFF' && selectedText.fill !== '#000000' ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50'}`}
-                    style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
-                    title="Choose Custom Color"
-                  >
-                    <input 
-                      type="color" 
-                      value={!selectedText.isGradient ? selectedText.fill : '#ffffff'} 
-                      onChange={(e) => { saveH(); updateText(selectedText.id, { fill: e.target.value, isGradient: false }); }} 
-                      className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer opacity-0"
-                    />
+                  <div className={`relative w-8 h-8 rounded-full border-2 overflow-hidden hover:scale-110 transition-transform ${!selectedText.isGradient && selectedText.fill !== '#FFFFFF' && selectedText.fill !== '#000000' ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50'}`} style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }} title="Choose Custom Color">
+                    <input type="color" value={!selectedText.isGradient ? selectedText.fill : '#ffffff'} onChange={(e) => { saveH(); updateText(selectedText.id, { fill: e.target.value, isGradient: false }); }} className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer opacity-0" />
                   </div>
 
                   <div className="w-px h-6 bg-white/10 mx-1"></div>
 
-                  {/* ৩. গ্রেডিয়েন্ট অপশন */}
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#f6d365', '#fda085'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#f6d365] to-[#fda085] ${selectedText.isGradient && selectedText.gradientColors[0] === '#f6d365' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Sunset Gradient" />
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#84fab0', '#8fd3f4'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#84fab0] to-[#8fd3f4] ${selectedText.isGradient && selectedText.gradientColors[0] === '#84fab0' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Ocean Gradient" />
                   <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#a18cd1', '#fbc2eb'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#a18cd1] to-[#fbc2eb] ${selectedText.isGradient && selectedText.gradientColors[0] === '#a18cd1' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Purple Haze" />
@@ -212,6 +176,7 @@ const ControlPanel = () => {
                 <select value={selectedText.fontFamily} onChange={(e) => { saveH(); updateText(selectedText.id, { fontFamily: e.target.value }); }} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-blue-500">
                   <optgroup label="Saved Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
                   <optgroup label="Presets">
+                    <option value="'Hind Siliguri', sans-serif">Hind Siliguri (Bengali)</option>
                     <option value="'Mont Blanc Light', sans-serif">Mont Blanc (Premium)</option>
                     <option value="sans-serif">System Default</option>
                     <option value="'Playfair Display', serif">Playfair (Elegant)</option>
@@ -219,7 +184,7 @@ const ControlPanel = () => {
                   </optgroup>
                 </select>
               </div>
-              <StepperSlider label="Font Size" value={selectedText.fontSize} min={12} max={150} onAction={saveH} onChange={(val) => updateText(selectedText.id, { fontSize: val })} unit="px" />
+              <StepperSlider label="Font Size" value={selectedText.fontSize} min={12} max={150} onAction={saveH} onChange={(val: number) => updateText(selectedText.id, { fontSize: val })} unit="px" />
             </div>
           </div>
         )}
@@ -228,13 +193,14 @@ const ControlPanel = () => {
         {activeTab === 'effects' && selectedText && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
              <div className="grid grid-cols-1 gap-6 bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg">
-                <StepperSlider label="Letter Spacing" value={selectedText.letterSpacing} min={-5} max={30} onAction={saveH} onChange={(v) => updateText(selectedText.id, { letterSpacing: v })} unit="px" />
-                <StepperSlider label="Line Height (Vertical)" value={selectedText.lineHeight || 1.2} min={0.5} max={3} step={0.1} onAction={saveH} onChange={(v) => updateText(selectedText.id, { lineHeight: v })} />
+                <StepperSlider label="Letter Spacing" value={selectedText.letterSpacing} min={-5} max={30} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { letterSpacing: v })} unit="px" />
+                <StepperSlider label="Line Height (Vertical)" value={selectedText.lineHeight || 1.2} min={0.5} max={3} step={0.1} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { lineHeight: v })} />
              </div>
 
             <div className="space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10">
               <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Outline (Stroke)</h4>
-              <StepperSlider label="Thickness" value={selectedText.strokeWidth || 0} min={0} max={10} step={0.5} onAction={saveH} onChange={(v) => updateText(selectedText.id, { strokeWidth: v })} unit="px" />
+              <button onClick={saveH} className="hidden"></button>
+              <StepperSlider label="Thickness" value={selectedText.strokeWidth || 0} min={0} max={10} step={0.5} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { strokeWidth: v })} unit="px" />
               <div className="flex gap-3 pt-1">
                 {['transparent', '#000000', '#FFFFFF', '#EF4444'].map((color) => (
                   <button key={color} onClick={() => { saveH(); updateText(selectedText.id, { stroke: color }); }} className={`w-8 h-8 rounded-full border-2 transition-all ${selectedText.stroke === color ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50'}`} style={color === 'transparent' ? { backgroundImage: 'repeating-conic-gradient(#3f3f46 0% 25%, transparent 0% 50%)', backgroundSize: '8px 8px' } : { backgroundColor: color }} />
@@ -244,11 +210,11 @@ const ControlPanel = () => {
 
             <div className="space-y-5 bg-white/5 p-4 rounded-2xl border border-white/10 shadow-lg">
               <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Shadow & Glow Positioning</h4>
-              <StepperSlider label="Blur Amount" value={selectedText.shadowBlur || 0} min={0} max={50} onAction={saveH} onChange={(v) => updateText(selectedText.id, { shadowBlur: v })} />
+              <StepperSlider label="Blur Amount" value={selectedText.shadowBlur || 0} min={0} max={50} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { shadowBlur: v })} />
               
               <div className="grid grid-cols-1 gap-6 pt-2">
-                <StepperSlider label="Offset X (Shadow)" value={selectedText.shadowOffsetX || 0} min={-30} max={30} onAction={saveH} onChange={(v) => updateText(selectedText.id, { shadowOffsetX: v })} unit="px" />
-                <StepperSlider label="Offset Y (Shadow)" value={selectedText.shadowOffsetY || 0} min={-30} max={30} onAction={saveH} onChange={(v) => updateText(selectedText.id, { shadowOffsetY: v })} unit="px" />
+                <StepperSlider label="Offset X (Shadow)" value={selectedText.shadowOffsetX || 0} min={-30} max={30} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { shadowOffsetX: v })} unit="px" />
+                <StepperSlider label="Offset Y (Shadow)" value={selectedText.shadowOffsetY || 0} min={-30} max={30} onAction={saveH} onChange={(v: number) => updateText(selectedText.id, { shadowOffsetY: v })} unit="px" />
               </div>
 
               <div className="flex gap-3 pt-3 border-t border-white/5">
