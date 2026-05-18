@@ -113,23 +113,6 @@ export default function TextPanel() {
          />
       </div>
 
-      {/* Shadow & Glow Engine */}
-      <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
-         <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Shadow & Glow</h4>
-         
-         <StepperSlider label="Blur Amount" value={selectedLayer.shadowBlur || 0} min={0} max={100} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowBlur: v })} unit="px" />
-         <StepperSlider label="Offset X (Horizontal)" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetX: v })} unit="px" />
-         <StepperSlider label="Offset Y (Vertical)" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetY: v })} unit="px" />
-         
-         {/* Shadow Color Popup */}
-         <ColorPickerPopup 
-           label="Shadow Color" 
-           color={selectedLayer.shadowColor || 'transparent'} 
-           onAction={saveHistory}
-           onChange={(c) => updateLayer(selectedLayer.id, { shadowColor: c })} 
-         />
-      </div>
-
     </div>
   );
 }
