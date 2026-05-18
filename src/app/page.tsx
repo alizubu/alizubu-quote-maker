@@ -2,15 +2,16 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Loader2, Plus, Eye, EyeOff, Lock, Unlock, Copy, Trash2, X, Sparkles, ShieldCheck, ArrowUp, ArrowDown, Edit3, Layers, Type, Image as ImageIcon } from 'lucide-react';
-
-// --- ফিক্সড ইম্পোর্ট পাথ (মডুলার ফোল্ডার থেকে) ---
-import ControlPanel from '../components/editor/panels/ControlPanel'; 
-import TopBar from '../components/editor/topbar/TopBar';
-import { useEditorStore } from '../store/useEditorStore';
+import { X, Sparkles, ShieldCheck } from 'lucide-react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-// Lazy Load Canvas (ফিক্সড পাথ)
+// Modular Imports
+import ControlPanel from '../components/editor/panels/ControlPanel'; 
+import TopBar from '../components/editor/topbar/TopBar';
+import LayerPanel from '../components/editor/layers/LayerPanel';
+import { useEditorStore } from '../store/useEditorStore';
+
+// Lazy Load Canvas
 const CanvasArea = dynamic(() => import('../components/editor/canvas/CanvasArea'), {
   ssr: false,
   loading: () => (
@@ -22,16 +23,8 @@ const CanvasArea = dynamic(() => import('../components/editor/canvas/CanvasArea'
 });
 
 export default function EditorPage() {
-  const { 
-    layers, selectedLayerId, isLayersOpen, setLayersOpen, 
-    setSelectedLayer, toggleVisibility, toggleLock, duplicateLayer, deleteLayer, addTextLayer,
-    isExportModalOpen, setExportModalOpen, renameLayer, moveLayerUp, moveLayerDown,
-    undo, redo
-  } = useEditorStore();
-
+  const { selectedLayerId, deleteLayer, duplicateLayer, isExportModalOpen, setExportModalOpen, undo, redo } = useEditorStore();
   const [selectedQuality, setSelectedQuality] = useState<number>(1080);
-  const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
-  const [tempLayerName, setTempLayerName] = useState<string>('');
 
   const qualityOptions = [
     { label: 'Normal Quality', sub: '720p (Fast Upload)', width: 720 },
@@ -48,25 +41,8 @@ export default function EditorPage() {
   // --- KEYBOARD SHORTCUTS ---
   useHotkeys('ctrl+z, meta+z', () => undo(), { preventDefault: true });
   useHotkeys('ctrl+y, meta+y, ctrl+shift+z, meta+shift+z', () => redo(), { preventDefault: true });
-  useHotkeys('delete, backspace', () => {
-    if (selectedLayerId && !editingLayerId) deleteLayer(selectedLayerId);
-  }, { preventDefault: true }, [selectedLayerId, editingLayerId]);
-  useHotkeys('ctrl+d, meta+d', () => {
-    if (selectedLayerId && !editingLayerId) duplicateLayer(selectedLayerId);
-  }, { preventDefault: true }, [selectedLayerId, editingLayerId]);
-
-  // Rename Layer Logic
-  const startRename = (id: string, currentName: string) => {
-    setEditingLayerId(id);
-    setTempLayerName(currentName);
-  };
-
-  const finishRename = (id: string) => {
-    if (tempLayerName.trim() !== '') {
-      renameLayer(id, tempLayerName);
-    }
-    setEditingLayerId(null);
-  };
+  useHotkeys('delete, backspace', () => { if (selectedLayerId) deleteLayer(selectedLayerId); }, { preventDefault: true }, [selectedLayerId]);
+  useHotkeys('ctrl+d, meta+d', () => { if (selectedLayerId) duplicateLayer(selectedLayerId); }, { preventDefault: true }, [selectedLayerId]);
 
   return (
     <main className="h-[100dvh] w-screen bg-black text-white flex flex-col md:flex-row overflow-hidden font-sans selection:bg-white/30 relative">
@@ -106,67 +82,9 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* --- FIGMA STYLE LAYERS DRAWER --- */}
-      {isLayersOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm" onClick={() => setLayersOpen(false)} />}
-      <div className={`fixed top-0 left-0 h-full w-[300px] bg-[#121212] border-r border-white/10 shadow-2xl z-50 transform transition-transform duration-300 ease-out flex flex-col ${isLayersOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        
-        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#121212] sticky top-0 z-10">
-          <h2 className="text-xs font-bold tracking-widest uppercase text-white flex items-center gap-2"><Layers size={14} className="text-blue-400"/> Layers Panel</h2>
-          <div className="flex gap-2">
-            <button onClick={() => addTextLayer({})} className="p-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg text-white transition-colors" title="Add Text"><Plus size={14} /></button>
-            <button onClick={() => setLayersOpen(false)} className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors"><X size={14} /></button>
-          </div>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-          {layers.map((layer) => (
-            <div key={layer.id} onClick={() => setSelectedLayer(layer.id)} className={`flex flex-col gap-2 p-3 rounded-xl border transition-all cursor-pointer ${selectedLayerId === layer.id ? 'bg-blue-500/10 border-blue-500/50 shadow-md' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}>
-              
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-[10px] text-zinc-500">
-                    {layer.type === 'text' ? <Type size={12} /> : <ImageIcon size={12} />}
-                  </span>
-                  
-                  {/* Layer Rename Logic */}
-                  {editingLayerId === layer.id ? (
-                    <input 
-                      autoFocus 
-                      value={tempLayerName} 
-                      onChange={(e) => setTempLayerName(e.target.value)} 
-                      onBlur={() => finishRename(layer.id)}
-                      onKeyDown={(e) => e.key === 'Enter' && finishRename(layer.id)}
-                      className="bg-black/50 text-xs text-white px-2 py-1 rounded outline-none border border-blue-500 w-full"
-                    />
-                  ) : (
-                    <p className={`text-xs font-medium truncate flex-1 ${selectedLayerId === layer.id ? 'text-white' : 'text-zinc-300'}`} onDoubleClick={(e) => { e.stopPropagation(); startRename(layer.id, layer.name); }}>
-                      {layer.name}
-                    </p>
-                  )}
-                </div>
+      {/* --- INJECTED MODULAR LAYER PANEL --- */}
+      <LayerPanel />
 
-                <div className="flex gap-1">
-                  <button onClick={(e) => { e.stopPropagation(); startRename(layer.id, layer.name); }} className="p-1 hover:bg-white/10 rounded text-zinc-500 hover:text-white" title="Rename"><Edit3 size={12} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); moveLayerUp(layer.id); }} className="p-1 hover:bg-white/10 rounded text-zinc-500 hover:text-white" title="Bring Forward"><ArrowUp size={12} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); moveLayerDown(layer.id); }} className="p-1 hover:bg-white/10 rounded text-zinc-500 hover:text-white" title="Send Backward"><ArrowDown size={12} /></button>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center pt-2 border-t border-white/5" onClick={(e) => e.stopPropagation()}>
-                <div className="flex gap-2">
-                  <button onClick={() => toggleVisibility(layer.id)} className="p-1.5 hover:bg-white/10 rounded transition-colors" title="Toggle Visibility">{layer.visible ? <Eye size={14} className="text-zinc-400 hover:text-white" /> : <EyeOff size={14} className="text-red-500" />}</button>
-                  <button onClick={() => toggleLock(layer.id)} className="p-1.5 hover:bg-white/10 rounded transition-colors" title="Lock/Unlock Layer">{layer.locked ? <Lock size={14} className="text-amber-500" /> : <Unlock size={14} className="text-zinc-400 hover:text-white" />}</button>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => duplicateLayer(layer.id)} className="p-1.5 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors" title="Duplicate Layer"><Copy size={14} /></button>
-                  <button onClick={() => deleteLayer(layer.id)} className="p-1.5 hover:bg-red-500/20 rounded text-zinc-500 hover:text-red-400 transition-colors" title="Delete Layer"><Trash2 size={14} /></button>
-                </div>
-              </div>
-
-            </div>
-          ))}
-        </div>
-      </div>
     </main>
   );
 }
