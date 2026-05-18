@@ -7,6 +7,8 @@ export interface TextLayer {
   fontFamily: string;
   fontWeight: string;
   fill: string;
+  isGradient: boolean; // গ্রেডিয়েন্ট চেক করার জন্য
+  gradientColors: [string, string]; // গ্রেডিয়েন্ট কালার অ্যারে
   x: number;
   y: number;
   align: 'left' | 'center' | 'right';
@@ -117,7 +119,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
   };
 
   return {
-    // আপনার দেওয়া JSON অনুযায়ী ব্যাকগ্রাউন্ড ডিফল্ট সেটিং
     bgColor: '#ffffff',
     bgImage: null,
     bgBlur: 0,
@@ -134,7 +135,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
     past: [],
     future: [],
     
-    // আপনার দেওয়া JSON অনুযায়ী ডিফল্ট টেক্সট লেয়ার
     texts: [
       {
         id: '1',
@@ -143,8 +143,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
         fontFamily: "'Mont Blanc Light', sans-serif",
         fontWeight: 'normal',
         fill: '#FFFFFF',
-        x: 83.07801444021585,
-        y: 1137.3515248796152,
+        isGradient: false,
+        gradientColors: ['#f6d365', '#fda085'],
+        x: 83,
+        y: 1137,
         align: 'left',
         letterSpacing: -2,
         lineHeight: 1.5,
@@ -198,7 +200,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     addText: (newText) => {
       get().saveHistory();
       set((state) => ({
-        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
+        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', isGradient: false, gradientColors: ['#f6d365', '#fda085'], x: 150, y: 800, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
         selectedTextId: null,
       }));
     },

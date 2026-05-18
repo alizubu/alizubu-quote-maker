@@ -8,8 +8,6 @@ import {
   Undo2, Redo2, Maximize2, Minus, Plus 
 } from 'lucide-react';
 
-// --- REUSABLE STEPPER SLIDER COMPONENT ---
-// এই কম্পোনেন্টটি সব জায়গায় স্লাইডার হিসেবে কাজ করবে
 const StepperSlider = ({ 
   label, value, min, max, step = 1, unit = "", 
   onChange, onAction 
@@ -17,48 +15,18 @@ const StepperSlider = ({
   label: string, value: number, min: number, max: number, step?: number, unit?: string,
   onChange: (val: number) => void, onAction: () => void 
 }) => {
-  
-  const handleDecrement = () => {
-    onAction(); // History Save
-    const newVal = Math.max(min, Number((value - step).toFixed(2)));
-    onChange(newVal);
-  };
-
-  const handleIncrement = () => {
-    onAction(); // History Save
-    const newVal = Math.min(max, Number((value + step).toFixed(2)));
-    onChange(newVal);
-  };
-
+  const handleDecrement = () => { onAction(); onChange(Math.max(min, Number((value - step).toFixed(2)))); };
+  const handleIncrement = () => { onAction(); onChange(Math.min(max, Number((value + step).toFixed(2)))); };
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-[11px] font-medium text-zinc-300">
         <label>{label}</label>
-        <span className="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">
-          {value}{unit}
-        </span>
+        <span className="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md">{value}{unit}</span>
       </div>
       <div className="flex items-center gap-3">
-        <button 
-          onClick={handleDecrement}
-          className="w-8 h-8 flex flex-shrink-0 items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
-        >
-          <Minus size={14} />
-        </button>
-        
-        <input 
-          type="range" min={min} max={max} step={step} value={value} 
-          onMouseDown={onAction} onTouchStart={onAction}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 accent-blue-500 h-1.5 rounded-full cursor-pointer"
-        />
-
-        <button 
-          onClick={handleIncrement}
-          className="w-8 h-8 flex flex-shrink-0 items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
-        >
-          <Plus size={14} />
-        </button>
+        <button onClick={handleDecrement} className="w-8 h-8 flex flex-shrink-0 items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"><Minus size={14} /></button>
+        <input type="range" min={min} max={max} step={step} value={value} onMouseDown={onAction} onTouchStart={onAction} onChange={(e) => onChange(Number(e.target.value))} className="flex-1 accent-blue-500 h-1.5 rounded-full cursor-pointer" />
+        <button onClick={handleIncrement} className="w-8 h-8 flex flex-shrink-0 items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"><Plus size={14} /></button>
       </div>
     </div>
   );
@@ -107,7 +75,6 @@ const ControlPanel = () => {
   return (
     <div className="flex flex-col h-full select-none bg-gradient-to-b from-[#0c0c0e] to-[#050505] relative">
       
-      {/* --- HISTORY NAVIGATION --- */}
       <div className="flex justify-between items-center px-5 py-3 border-b border-white/5 bg-black/20 shrink-0">
         <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest">History Engine</span>
         <div className="flex gap-2">
@@ -143,12 +110,9 @@ const ControlPanel = () => {
                   <h4 className="text-[10px] font-bold uppercase text-blue-400 tracking-wider">Image Transform</h4>
                   <button onClick={() => setBgImage(null)} className="p-1 text-zinc-500 hover:text-red-400 transition-colors"><X size={14} /></button>
                 </div>
-                
-                {/* STEPPER SLIDERS FOR BACKGROUND */}
                 <StepperSlider label="Image Scale (Zoom)" value={bgScale} min={0.5} max={4} step={0.05} unit="x" onAction={saveH} onChange={setBgScale} />
                 <StepperSlider label="Position X (Horizontal)" value={bgX} min={-1000} max={1000} step={1} unit="px" onAction={saveH} onChange={setBgX} />
                 <StepperSlider label="Position Y (Vertical)" value={bgY} min={-1000} max={1000} step={1} unit="px" onAction={saveH} onChange={setBgY} />
-
                 <div className="pt-2 border-t border-white/5 space-y-5">
                   <StepperSlider label="Blur Intensity" value={bgBlur} min={0} max={50} onAction={saveH} onChange={setBgBlur} />
                   <StepperSlider label="Brightness" value={bgBrightness} min={-100} max={100} unit="%" onAction={saveH} onChange={setBgBrightness} />
@@ -158,7 +122,6 @@ const ControlPanel = () => {
           </div>
         )}
 
-        {/* EMPTY STATE */}
         {(activeTab === 'edit' || activeTab === 'effects') && !selectedText && (
           <div className="h-full min-h-[200px] flex flex-col items-center justify-center border border-dashed border-white/10 rounded-3xl text-zinc-400 text-center px-6 bg-white/5 gap-5 mt-4 shadow-inner">
             <Type size={32} className="text-zinc-700" />
@@ -186,7 +149,7 @@ const ControlPanel = () => {
                <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform"><Edit2 size={16} /></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Alignment</label>
                 <div className="flex bg-white/5 p-1.5 rounded-xl border border-white/10">
@@ -199,12 +162,34 @@ const ControlPanel = () => {
                   ))}
                 </div>
               </div>
+
+              {/* NEW: CUSTOM COLOR PICKER AND GRADIENTS */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Quick Fill</label>
-                <div className="flex gap-2 flex-wrap bg-white/5 p-2 rounded-xl border border-white/10 justify-center">
-                  {['#FFFFFF', '#A1A1AA', '#FCA5A5', '#000000'].map((color) => (
-                    <button key={color} onClick={() => { saveH(); updateText(selectedText.id, { fill: color }); }} className={`w-7 h-7 rounded-full border-2 transition-transform ${selectedText.fill === color ? 'border-blue-500 scale-125' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Color & Gradients</label>
+                <div className="flex gap-3 flex-wrap bg-white/5 p-3 rounded-xl border border-white/10 items-center">
+                  
+                  {/* Native Color Picker (Any Color) */}
+                  <div className={`relative w-8 h-8 rounded-full border-2 overflow-hidden hover:scale-110 transition-transform ${!selectedText.isGradient ? 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : 'border-zinc-700/50'}`}>
+                    <input 
+                      type="color" 
+                      value={selectedText.fill} 
+                      onChange={(e) => { saveH(); updateText(selectedText.id, { fill: e.target.value, isGradient: false }); }} 
+                      className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer"
+                      title="Choose Custom Color"
+                    />
+                  </div>
+
+                  {/* Preset Solid Colors */}
+                  {['#FFFFFF', '#000000'].map((color) => (
+                    <button key={color} onClick={() => { saveH(); updateText(selectedText.id, { fill: color, isGradient: false }); }} className={`w-8 h-8 rounded-full border-2 transition-transform ${selectedText.fill === color && !selectedText.isGradient ? 'border-blue-500 scale-110 shadow-md' : 'border-zinc-700/50 hover:scale-110'}`} style={{ backgroundColor: color }} />
                   ))}
+
+                  <div className="w-px h-6 bg-white/10 mx-1"></div>
+
+                  {/* Aesthetic Gradients */}
+                  <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#f6d365', '#fda085'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#f6d365] to-[#fda085] ${selectedText.isGradient && selectedText.gradientColors[0] === '#f6d365' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Sunset Gradient" />
+                  <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#84fab0', '#8fd3f4'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#84fab0] to-[#8fd3f4] ${selectedText.isGradient && selectedText.gradientColors[0] === '#84fab0' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Ocean Gradient" />
+                  <button onClick={() => { saveH(); updateText(selectedText.id, { isGradient: true, gradientColors: ['#a18cd1', '#fbc2eb'] }); }} className={`w-8 h-8 rounded-full border-2 transition-transform bg-gradient-to-b from-[#a18cd1] to-[#fbc2eb] ${selectedText.isGradient && selectedText.gradientColors[0] === '#a18cd1' ? 'border-white scale-110 shadow-lg' : 'border-zinc-700/50 hover:scale-110'}`} title="Purple Haze" />
                 </div>
               </div>
             </div>
@@ -218,22 +203,15 @@ const ControlPanel = () => {
                 <input type="file" ref={fileInputRef} accept=".ttf,.otf,.woff" onChange={handleFontUpload} className="hidden" />
                 <select value={selectedText.fontFamily} onChange={(e) => { saveH(); updateText(selectedText.id, { fontFamily: e.target.value }); }} className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm text-white outline-none focus:border-blue-500">
                   <optgroup label="Saved Fonts">{customFonts.map(font => <option key={font.name} value={font.name}>{font.name}</option>)}</optgroup>
-                  <optgroup label="Aesthetic Presets">
-                            {/* এই লাইনটি আপডেট করুন */}
-                    <option value="'Mont Blanc Light', sans-serif">Mont Blanc Light (Premium)</option>
+                  <optgroup label="Presets">
+                    <option value="'Mont Blanc Light', sans-serif">Mont Blanc (Premium)</option>
                     <option value="sans-serif">System Default</option>
                     <option value="'Playfair Display', serif">Playfair (Elegant)</option>
                     <option value="'Cinzel', serif">Cinzel (Luxury)</option>
                   </optgroup>
                 </select>
               </div>
-              
-              {/* FONT SIZE WITH STEPPER */}
-              <StepperSlider 
-                label="Font Size" value={selectedText.fontSize} min={12} max={150} 
-                onAction={saveH} onChange={(val) => updateText(selectedText.id, { fontSize: val })} 
-                unit="px"
-              />
+              <StepperSlider label="Font Size" value={selectedText.fontSize} min={12} max={150} onAction={saveH} onChange={(val) => updateText(selectedText.id, { fontSize: val })} unit="px" />
             </div>
           </div>
         )}
@@ -274,7 +252,6 @@ const ControlPanel = () => {
         )}
       </div>
 
-      {/* --- GLOSSY TABS FOOTER --- */}
       <div className="flex gap-2 p-3 bg-black/60 backdrop-blur-3xl border-t border-white/10 shrink-0 z-20 pb-6 md:pb-4">
         <button onClick={() => setActiveTab('bg')} className={`flex-1 flex flex-col justify-center items-center gap-1.5 py-3 rounded-2xl transition-all duration-300 ${activeTab === 'bg' ? 'bg-blue-500 text-white shadow-xl scale-105' : 'bg-white/5 text-zinc-400 hover:text-white'}`}>
           <Palette size={20} />
@@ -289,7 +266,6 @@ const ControlPanel = () => {
           <span className="text-[10px] font-bold tracking-wider">Effects</span>
         </button>
       </div>
-
     </div>
   );
 };

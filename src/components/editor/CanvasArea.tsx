@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer } from 'react-konva';
+import { Stage, Layer, Rect, Text, Image as KonvaImage, Transformer, Line } from 'react-konva';
 import { useEditorStore } from '../../store/useEditorStore';
 import useImage from 'use-image';
 import Konva from 'konva';
-import { Check } from 'lucide-react';
+import { Check, Trash2 } from 'lucide-react';
 
 const CanvasArea = () => {
   const { 
@@ -16,6 +16,10 @@ const CanvasArea = () => {
   
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
   const [localTextValue, setLocalTextValue] = useState("");
+  
+  // ম্যাগনেটিক স্ন্যাপ লাইনের জন্য স্টেট
+  const [snapLines, setSnapLines] = useState<{v: number | null, h: number | null}>({v: null, h: null});
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
   const imageRef = useRef<any>(null);
@@ -24,12 +28,8 @@ const CanvasArea = () => {
 
   const [image] = useImage(bgImage || '', 'anonymous');
 
-  // ৩. অ্যাপ চালুর সময় পার্মানেন্ট ফন্টগুলো ডেটাবেজ থেকে রিলোড করা
-  useEffect(() => {
-    initPersistentFonts();
-  }, [initPersistentFonts]);
+  useEffect(() => { initPersistentFonts(); }, [initPersistentFonts]);
 
-  // রেসপনসিভ অটো-স্কেলিং ক্যানভাস ম্যাথ
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -43,7 +43,6 @@ const CanvasArea = () => {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // ৪কে ক্রিস্টাল ক্লিয়ার এক্সপোর্ট লজিক
   useEffect(() => {
     const handleSafeDownload = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -51,17 +50,11 @@ const CanvasArea = () => {
       
       if (stageRef.current) {
         setSelectedText(null);
-        
         setTimeout(() => {
           const currentScale = stageRef.current.scaleX() || 1;
           const safePixelRatio = targetWidth / (1080 * currentScale);
-
           try {
-            const dataURL = stageRef.current.toDataURL({ 
-              pixelRatio: safePixelRatio,
-              mimeType: 'image/png' 
-            });
-            
+            const dataURL = stageRef.current.toDataURL({ pixelRatio: safePixelRatio, mimeType: 'image/png' });
             const link = document.createElement('a');
             link.download = `StoryMaker_${targetWidth}p_${Date.now()}.png`;
             link.href = dataURL;
@@ -74,7 +67,6 @@ const CanvasArea = () => {
         }, 150);
       }
     };
-
     window.addEventListener('trigger-safe-download', handleSafeDownload);
     return () => window.removeEventListener('trigger-safe-download', handleSafeDownload);
   }, [setSelectedText]);
@@ -115,11 +107,9 @@ const CanvasArea = () => {
     setTypingOverlayOpen(false);
   };
 
-  // ২. ইমেজ পজিশন এবং জুম ক্যালকুলেশন প্রপার্টিজ
   let imageProps = { x: 0, y: 0, width: 1080, height: 1920 };
   if (image) {
     const baseScale = Math.max(1080 / image.width, 1920 / image.height);
-    // ডিফল্ট সাইজের সাথে স্লাইডারের bgScale গুণ করা হচ্ছে, এবং bgX, bgY যোগ করা হচ্ছে
     imageProps = { 
       width: image.width * baseScale * bgScale, 
       height: image.height * baseScale * bgScale, 
@@ -138,15 +128,7 @@ const CanvasArea = () => {
             <Rect width={1080} height={1920} fill={bgColor} name="background" />
             
             {image && (
-              <KonvaImage 
-                ref={imageRef} 
-                image={image} 
-                name="background" 
-                {...imageProps} 
-                filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} 
-                blurRadius={bgBlur} 
-                brightness={bgBrightness / 100} 
-              />
+              <KonvaImage ref={imageRef} image={image} name="background" {...imageProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />
             )}
             
             {texts.map((textObj) => {
@@ -159,14 +141,48 @@ const CanvasArea = () => {
                   id={`text-${textObj.id}`}
                   text={isTypingOverlayOpen && selectedTextId === textObj.id ? "" : textObj.text}
                   x={textObj.x} y={textObj.y} fontSize={textObj.fontSize} fontFamily={premiumFontStack}
-                  fill={textObj.fill} align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight || 1.2}
+                  
+                  // গ্রেডিয়েন্ট এবং সলিড কালার লজিক
+                  fill={textObj.isGradient ? undefined : textObj.fill}
+                  fillLinearGradientStartPoint={textObj.isGradient ? { x: 0, y: 0 } : undefined}
+                  fillLinearGradientEndPoint={textObj.isGradient ? { x: 0, y: textObj.fontSize * 3 } : undefined} // Vertical gradient
+                  fillLinearGradientColorStops={textObj.isGradient ? [0, textObj.gradientColors[0], 1, textObj.gradientColors[1]] : undefined}
+                  
+                  align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight || 1.2}
                   draggable={!textObj.locked && !isTypingOverlayOpen}
                   onClick={() => setSelectedText(textObj.id)} onTap={() => setSelectedText(textObj.id)}
                   onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
                   
-                  // মাউস বা টাচ ছাড়ার পর ড্র্যাগ হিস্ট্রি রেকর্ড করার জন্য ট্রিগার
+                  // Magnetic Snapping Logic
+                  onDragMove={(e: any) => {
+                    const node = e.target;
+                    const width = node.width() * node.scaleX();
+                    const height = node.height() * node.scaleY();
+                    const centerX = node.x() + width / 2;
+                    const centerY = node.y() + height / 2;
+              
+                    const TARGET_X = 1080 / 2;
+                    const TARGET_Y = 1920 / 2;
+                    const SNAP_TOLERANCE = 30; // 30px এর মধ্যে আসলে স্ন্যাপ করবে
+              
+                    let snapV = null;
+                    let snapH = null;
+              
+                    if (Math.abs(centerX - TARGET_X) < SNAP_TOLERANCE) {
+                      node.x(TARGET_X - width / 2);
+                      snapV = TARGET_X;
+                    }
+                    if (Math.abs(centerY - TARGET_Y) < SNAP_TOLERANCE) {
+                      node.y(TARGET_Y - height / 2);
+                      snapH = TARGET_Y;
+                    }
+                    setSnapLines({ v: snapV, h: snapH });
+                  }}
                   onDragStart={() => useEditorStore.getState().saveHistory()}
-                  onDragEnd={(e: any) => updateText(textObj.id, { x: e.target.x(), y: e.target.y() })}
+                  onDragEnd={(e: any) => {
+                    setSnapLines({ v: null, h: null }); // স্ন্যাপ লাইন রিমুভ
+                    updateText(textObj.id, { x: e.target.x(), y: e.target.y() });
+                  }}
                   
                   onTransformStart={() => useEditorStore.getState().saveHistory()}
                   onTransformEnd={(e: any) => {
@@ -179,6 +195,10 @@ const CanvasArea = () => {
                 />
               );
             })}
+
+            {/* স্ন্যাপ গাইডলাইনস (পিংক কালার লাইন) */}
+            {snapLines.v !== null && <Line points={[snapLines.v, 0, snapLines.v, 1920]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
+            {snapLines.h !== null && <Line points={[0, snapLines.h, 1080, snapLines.h]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
 
             {selectedTextId && !isTypingOverlayOpen && (
               <Transformer 
@@ -196,9 +216,21 @@ const CanvasArea = () => {
         <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200">
           <div className="flex justify-between items-center mb-6">
             <span className="text-white/40 text-xs font-bold uppercase tracking-widest">Editor Keyboard</span>
-            <button onClick={closeTypingOverlay} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-full font-bold flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform">
-              <Check size={16} /> Done
-            </button>
+            
+            <div className="flex gap-3">
+              {/* নতুন Clear Button */}
+              <button 
+                onClick={() => setLocalTextValue("")} 
+                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-full font-bold flex items-center gap-1.5 transition-colors active:scale-95 border border-red-500/20"
+              >
+                <Trash2 size={16} /> Clear
+              </button>
+              
+              <button onClick={closeTypingOverlay} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-2 rounded-full font-bold flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform">
+                <Check size={16} /> Done
+              </button>
+            </div>
+
           </div>
           <textarea
             ref={textareaRef}
