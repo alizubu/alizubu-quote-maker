@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface TextLayer {
   id: string;
+  name: string; // Figma style layer name
   text: string;
   fontSize: number;
   fontFamily: string;
@@ -20,6 +21,7 @@ export interface TextLayer {
   shadowOffsetY: number;
   stroke: string;
   strokeWidth: number;
+  strokeType: 'outer' | 'inner'; // Inner/Outer stroke option
   visible: boolean;
   locked: boolean;
 }
@@ -55,16 +57,14 @@ interface EditorState {
   customFonts: CustomFont[];
   selectedTextId: string | null;
   
-  // ক্যানভাস সাইজ এবং রেশিও স্টেট
   canvasWidth: number;
   canvasHeight: number;
   aspectRatioName: string;
   
-  // পপআপ এবং উইন্ডো স্টেট
   isLayersOpen: boolean;
   isTypingOverlayOpen: boolean;
   isExportModalOpen: boolean;
-  isRatioModalOpen: boolean; // রেশিও পপআপের জন্য
+  isRatioModalOpen: boolean;
   
   past: HistorySnapshot[];
   future: HistorySnapshot[];
@@ -86,6 +86,7 @@ interface EditorState {
   
   addText: (text: Partial<TextLayer>) => void;
   updateText: (id: string, attrs: Partial<TextLayer>) => void;
+  renameText: (id: string, newName: string) => void; // Rename function added
   deleteText: (id: string) => void;
   duplicateText: (id: string) => void;
   setSelectedText: (id: string | null) => void;
@@ -144,7 +145,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
     selectedTextId: null,
     customFonts: [],
     
-    // ডিফল্ট সাইজ (TikTok / IG Story 9:16)
     canvasWidth: 1080,
     canvasHeight: 1920,
     aspectRatioName: 'TikTok / IG Story (9:16)',
@@ -160,9 +160,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
     texts: [
       {
         id: '1',
+        name: 'Husn Quote', // Default Layer Name
         text: 'Ye Husn Se \nBhare Chehere \nIttrate Bahut Hai',
         fontSize: 74,
-        fontFamily: "'Mont Blanc Light', sans-serif",
+        fontFamily: "'Hind Siliguri', sans-serif",
         fontWeight: 'normal',
         fill: '#FFFFFF',
         isGradient: false,
@@ -178,6 +179,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         shadowOffsetY: 4,
         stroke: '#000000',
         strokeWidth: 0.5,
+        strokeType: 'outer', // Default Stroke
         visible: true,
         locked: false
       }
@@ -227,13 +229,28 @@ export const useEditorStore = create<EditorState>((set, get) => {
     addText: (newText) => {
       get().saveHistory();
       set((state) => ({
-        texts: [...state.texts, { id: Date.now().toString(), text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', isGradient: false, gradientColors: ['#f6d365', '#fda085'], x: state.canvasWidth / 2 - 150, y: state.canvasHeight / 2, align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, visible: true, locked: false, ...newText }],
+        texts: [...state.texts, { 
+          id: Date.now().toString(), 
+          name: `Layer ${state.texts.length + 1}`, // Auto layer naming
+          text: 'Double Tap to Edit 📝', 
+          fontSize: 40, fontFamily: 'sans-serif', fontWeight: 'normal', fill: '#000000', 
+          isGradient: false, gradientColors: ['#f6d365', '#fda085'], 
+          x: state.canvasWidth / 2 - 150, y: state.canvasHeight / 2, align: 'center', 
+          letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, 
+          stroke: 'transparent', strokeWidth: 0, strokeType: 'outer', 
+          visible: true, locked: false, ...newText 
+        }],
         selectedTextId: null,
       }));
     },
 
     updateText: (id, attrs) => {
       set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, ...attrs } : t)) }));
+    },
+    
+    renameText: (id, newName) => {
+      get().saveHistory();
+      set((state) => ({ texts: state.texts.map((t) => (t.id === id ? { ...t, name: newName } : t)) }));
     },
 
     deleteText: (id) => {
@@ -246,7 +263,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       set((state) => {
         const source = state.texts.find((t) => t.id === id);
         if (!source) return state;
-        const clone = { ...source, id: Date.now().toString(), x: source.x + 30, y: source.y + 30, locked: false };
+        const clone = { ...source, id: Date.now().toString(), name: `${source.name} Copy`, x: source.x + 30, y: source.y + 30, locked: false };
         return { texts: [...state.texts, clone] };
       });
     },

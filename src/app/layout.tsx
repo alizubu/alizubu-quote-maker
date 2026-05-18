@@ -1,8 +1,10 @@
-import './globals.css';
+import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
+import "./globals.css";
 
-export const metadata = {
-  title: 'StoryMaker | Aesthetic Quote Editor',
-  description: 'Create premium cinematic quote stories.',
+export const metadata: Metadata = {
+  title: "Alizubu Quote Maker",
+  description: "Professional Web-based Canvas Editor",
 };
 
 export default function RootLayout({
@@ -11,9 +13,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="antialiased bg-black text-white">
-        {children}
+    // suppressHydrationWarning দেওয়া হয়েছে যাতে next-themes এর কারণে কোনো ওয়ার্নিং না আসে
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

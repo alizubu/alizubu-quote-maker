@@ -12,7 +12,7 @@ const CanvasArea = () => {
     bgColor, bgImage, bgBlur, bgBrightness, bgScale, bgX, bgY, customFonts,
     texts, updateText, setSelectedText, selectedTextId,
     isTypingOverlayOpen, setTypingOverlayOpen, initPersistentFonts,
-    canvasWidth, canvasHeight // ডায়নামিক ক্যানভাস সাইজ ইমপোর্ট করা হলো
+    canvasWidth, canvasHeight 
   } = useEditorStore();
   
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
@@ -29,12 +29,11 @@ const CanvasArea = () => {
 
   useEffect(() => { initPersistentFonts(); }, [initPersistentFonts]);
 
-  // ডায়নামিক Aspect Ratio অনুযায়ী স্ক্রিন সাইজ আপডেট লজিক
+  // ডাইনামিক ক্যানভাস স্কেলিং
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
         const { clientWidth, clientHeight } = containerRef.current;
-        // ক্যানভাস সাইজের সাথে সামঞ্জস্য রেখে একটু প্যাডিং (0.95) দেওয়া হলো
         const scale = Math.min(clientWidth / canvasWidth, clientHeight / canvasHeight) * 0.95;
         setStageSize({ width: canvasWidth * scale, height: canvasHeight * scale });
       }
@@ -42,12 +41,12 @@ const CanvasArea = () => {
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
-  }, [canvasWidth, canvasHeight]); // রেশিও চেঞ্জ হলে অটো আপডেট হবে
+  }, [canvasWidth, canvasHeight]); 
 
+  // 4K এক্সপোর্ট ইঞ্জিন
   useEffect(() => {
     const handleSafeDownload = (e: Event) => {
       const customEvent = e as CustomEvent;
-      // ডিফল্ট বা কাস্টম এক্সপোর্ট উইডথ
       const targetWidth = customEvent.detail?.targetWidth || canvasWidth; 
       
       if (stageRef.current) {
@@ -109,7 +108,6 @@ const CanvasArea = () => {
     setTypingOverlayOpen(false);
   };
 
-  // ডাইনামিক ব্যাকগ্রাউন্ড পজিশন ক্যালকুলেশন
   let imageProps = { x: 0, y: 0, width: canvasWidth, height: canvasHeight };
   if (image) {
     const baseScale = Math.max(canvasWidth / image.width, canvasHeight / image.height);
@@ -153,7 +151,6 @@ const CanvasArea = () => {
                   onClick={() => setSelectedText(textObj.id)} onTap={() => setSelectedText(textObj.id)}
                   onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
                   
-                  // ডায়নামিক Magnetic Snapping Logic
                   onDragMove={(e: any) => {
                     const node = e.target;
                     const width = node.width() * node.scaleX();
@@ -191,12 +188,15 @@ const CanvasArea = () => {
                   }}
                   shadowColor={textObj.shadowColor} shadowBlur={textObj.shadowBlur} shadowOffsetX={textObj.shadowOffsetX} shadowOffsetY={textObj.shadowOffsetY}
                   shadowOpacity={textObj.shadowBlur > 0 || textObj.shadowOffsetX !== 0 || textObj.shadowOffsetY !== 0 ? 0.8 : 0}
-                  stroke={textObj.stroke} strokeWidth={textObj.strokeWidth} fillAfterStroke={true}
+                  
+                  // ৫. INNER / OUTER STROKE LOGIC
+                  stroke={textObj.stroke} 
+                  strokeWidth={textObj.strokeWidth} 
+                  fillAfterStrokeEnabled={textObj.strokeType === 'outer'} // Outer হলে stroke এর পর fill হবে
                 />
               );
             })}
 
-            {/* ডায়নামিক সাইজের ওপর ভিত্তি করে স্ন্যাপ লাইন আঁকা */}
             {snapLines.v !== null && <Line points={[snapLines.v, 0, snapLines.v, canvasHeight]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
             {snapLines.h !== null && <Line points={[0, snapLines.h, canvasWidth, snapLines.h]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
 
