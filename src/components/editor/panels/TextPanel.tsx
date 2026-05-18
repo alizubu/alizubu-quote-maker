@@ -3,7 +3,8 @@
 import React from 'react';
 import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
 import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
-import { HexColorPicker } from 'react-colorful';
+// এখানে HexColorPicker এর বদলে HexAlphaColorPicker ব্যবহার করা হয়েছে যেন কালারের সাথেই Opacity কমানো যায়
+import { HexAlphaColorPicker } from 'react-colorful'; 
 import { StepperSlider } from './BackgroundPanel';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -16,7 +17,9 @@ interface ColorPickerPopupProps {
 
 const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopupProps) => {
   const presets = ['#FFFFFF', '#000000', '#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6', 'transparent'];
-  const displayColor = color === 'transparent' || !color ? '#ffffff' : color;
+  
+  // 'transparent' কে HexAlpha ফরম্যাটে কনভার্ট করা যেন পিকারটি ক্র্যাশ না করে
+  const displayColor = color === 'transparent' || !color ? '#ffffff00' : color;
   
   return (
     <div className="flex items-center justify-between p-2.5 bg-zinc-100 dark:bg-black/40 rounded-xl border border-zinc-200/50 dark:border-white/5">
@@ -34,7 +37,8 @@ const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopup
           />
         </PopoverTrigger>
         <PopoverContent align="end" className="w-auto p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 shadow-2xl z-50">
-           <HexColorPicker color={displayColor} onChange={onChange} />
+           {/* Alpha Color Picker for Built-in Opacity */}
+           <HexAlphaColorPicker color={displayColor} onChange={onChange} />
            <div className="grid grid-cols-4 gap-2 mt-4 w-full">
              {presets.map(p => (
                <button 
@@ -68,7 +72,6 @@ export default function TextPanel() {
     );
   }
 
-  // ডিফল্ট কিছু ফন্ট লিস্ট
   const standardFonts = ['sans-serif', 'serif', 'monospace', 'Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Comic Sans MS', 'Mont_Blanc_Light'];
 
   return (
@@ -87,7 +90,7 @@ export default function TextPanel() {
       <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Typography Controls</h4>
         
-        {/* --- Font Family Selector (Added Back) --- */}
+        {/* Font Family Selector */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Font Style</label>
           <select 
@@ -126,41 +129,56 @@ export default function TextPanel() {
         </div>
 
         <ColorPickerPopup 
-          label="Text Color" 
+          label="Text Fill Color" 
           color={selectedLayer.fill} 
           onAction={saveHistory}
           onChange={(c) => updateLayer(selectedLayer.id, { fill: c, isGradient: false })} 
         />
       </div>
 
-      {/* Sizers & Stroke Configuration */}
+      {/* Sizers Configuration */}
       <div className="space-y-5 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
         <StepperSlider label="Font Size" value={selectedLayer.fontSize} min={12} max={200} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { fontSize: v })} unit="px" />
-        
-        {/* Added Letter Spacing & Line Height from earlier versions to match exact JSON spec requirements */}
         <StepperSlider label="Letter Spacing" value={selectedLayer.letterSpacing} min={-10} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { letterSpacing: v })} unit="px" />
         <StepperSlider label="Line Height" value={selectedLayer.lineHeight} min={0.5} max={3} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { lineHeight: v })} />
-        
-        <StepperSlider label="Opacity" value={selectedLayer.opacity} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { opacity: v })} />
-        
-        <div className="pt-4 border-t border-zinc-200 dark:border-white/5 space-y-4">
-           <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Outline Engine</h4>
-           
-           <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 dark:bg-black/40 rounded-xl">
-              <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { strokeType: 'outer' }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all ${selectedLayer.strokeType === 'outer' || !selectedLayer.strokeType ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}>Outer Stroke</button>
-              <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { strokeType: 'inner' }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all ${selectedLayer.strokeType === 'inner' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}>Inner Stroke</button>
-           </div>
-           
-           <StepperSlider label="Stroke Thickness" value={selectedLayer.strokeWidth || 0} min={0} max={20} step={0.5} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { strokeWidth: v })} unit="px" />
-           
-           <ColorPickerPopup 
-             label="Stroke Color" 
-             color={selectedLayer.stroke || 'transparent'} 
-             onAction={saveHistory}
-             onChange={(c) => updateLayer(selectedLayer.id, { stroke: c })} 
-           />
-        </div>
+        <StepperSlider label="Global Opacity" value={selectedLayer.opacity} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { opacity: v })} />
       </div>
+
+      {/* Outline Engine */}
+      <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
+         <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Outline (Stroke)</h4>
+         
+         <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 dark:bg-black/40 rounded-xl">
+            <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { strokeType: 'outer' }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all ${selectedLayer.strokeType === 'outer' || !selectedLayer.strokeType ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}>Outer Stroke</button>
+            <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { strokeType: 'inner' }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all ${selectedLayer.strokeType === 'inner' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}>Inner Stroke</button>
+         </div>
+         
+         <StepperSlider label="Stroke Thickness" value={selectedLayer.strokeWidth || 0} min={0} max={20} step={0.5} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { strokeWidth: v })} unit="px" />
+         
+         <ColorPickerPopup 
+           label="Stroke Color" 
+           color={selectedLayer.stroke || 'transparent'} 
+           onAction={saveHistory}
+           onChange={(c) => updateLayer(selectedLayer.id, { stroke: c })} 
+         />
+      </div>
+
+      {/* Shadow & Glow Engine (Newly Added) */}
+      <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
+         <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500">Shadow & Glow</h4>
+         
+         <StepperSlider label="Blur Amount" value={selectedLayer.shadowBlur || 0} min={0} max={100} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowBlur: v })} unit="px" />
+         <StepperSlider label="Offset X (Horizontal)" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetX: v })} unit="px" />
+         <StepperSlider label="Offset Y (Vertical)" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetY: v })} unit="px" />
+         
+         <ColorPickerPopup 
+           label="Shadow Color" 
+           color={selectedLayer.shadowColor || 'transparent'} 
+           onAction={saveHistory}
+           onChange={(c) => updateLayer(selectedLayer.id, { shadowColor: c })} 
+         />
+      </div>
+
     </div>
   );
 }
