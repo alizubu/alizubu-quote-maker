@@ -5,8 +5,6 @@ import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
 import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { StepperSlider } from './BackgroundPanel';
-
-// --- ফিক্সড ইম্পোর্ট পাথ (গ্লোবাল অ্যালিয়াস ব্যবহার করে) ---
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface ColorPickerPopupProps {
@@ -58,7 +56,7 @@ const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopup
 };
 
 export default function TextPanel() {
-  const { layers, selectedLayerId, updateLayer, setTypingOverlayOpen, saveHistory } = useEditorStore();
+  const { layers, selectedLayerId, updateLayer, setTypingOverlayOpen, saveHistory, customFonts } = useEditorStore();
   const selectedLayer = layers.find((l) => l.id === selectedLayerId) as TextLayer;
 
   if (!selectedLayer || selectedLayer.type !== 'text') {
@@ -69,6 +67,9 @@ export default function TextPanel() {
       </div>
     );
   }
+
+  // ডিফল্ট কিছু ফন্ট লিস্ট
+  const standardFonts = ['sans-serif', 'serif', 'monospace', 'Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Comic Sans MS', 'Mont_Blanc_Light'];
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
@@ -86,7 +87,30 @@ export default function TextPanel() {
       <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Typography Controls</h4>
         
-        <div className="flex gap-2">
+        {/* --- Font Family Selector (Added Back) --- */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Font Style</label>
+          <select 
+            value={selectedLayer.fontFamily || 'sans-serif'} 
+            onChange={(e) => { saveHistory(); updateLayer(selectedLayer.id, { fontFamily: e.target.value }); }} 
+            className="w-full bg-zinc-100 dark:bg-black/40 border border-zinc-200/50 dark:border-white/5 rounded-xl p-2.5 text-xs text-zinc-900 dark:text-white outline-none cursor-pointer appearance-none"
+          >
+            <optgroup label="Standard Fonts">
+              {standardFonts.map(font => (
+                <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
+              ))}
+            </optgroup>
+            {customFonts.length > 0 && (
+              <optgroup label="My Custom Fonts">
+                {customFonts.map(font => (
+                  <option key={font.name} value={font.name} style={{ fontFamily: font.name }}>{font.name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
+
+        <div className="flex gap-2 pt-1">
           <div className="flex bg-zinc-100 dark:bg-black/40 p-1 rounded-xl flex-1">
             {['left', 'center', 'right'].map((a) => (
               <button key={a} onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { align: a as any }); }} className={`flex-1 py-1.5 rounded-lg flex justify-center transition-all ${selectedLayer.align === a ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}>
@@ -112,6 +136,11 @@ export default function TextPanel() {
       {/* Sizers & Stroke Configuration */}
       <div className="space-y-5 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
         <StepperSlider label="Font Size" value={selectedLayer.fontSize} min={12} max={200} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { fontSize: v })} unit="px" />
+        
+        {/* Added Letter Spacing & Line Height from earlier versions to match exact JSON spec requirements */}
+        <StepperSlider label="Letter Spacing" value={selectedLayer.letterSpacing} min={-10} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { letterSpacing: v })} unit="px" />
+        <StepperSlider label="Line Height" value={selectedLayer.lineHeight} min={0.5} max={3} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { lineHeight: v })} />
+        
         <StepperSlider label="Opacity" value={selectedLayer.opacity} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { opacity: v })} />
         
         <div className="pt-4 border-t border-zinc-200 dark:border-white/5 space-y-4">
