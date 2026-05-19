@@ -105,6 +105,9 @@ const TopBar = () => {
     if (file) {
       const url = URL.createObjectURL(file);
       addImageLayer(url);
+      // FIX #9: revoke the object URL after Konva has loaded the image
+      // (short timeout so Konva can finish loading before we revoke)
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     }
     e.target.value = '';
   };
@@ -135,7 +138,7 @@ const TopBar = () => {
             {/* Left: Logo + Brand */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-300/50 dark:border-white/20">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-white/10">
+                <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-gradient-to-br dark:from-zinc-900 dark:to-black flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-200 dark:ring-white/10">
                   <Image
                     src="/logo.svg"
                     alt="Alizubu Logo"
@@ -217,7 +220,7 @@ const TopBar = () => {
           <div className="sm:hidden flex items-center justify-between gap-2">
             {/* Left: Logo only (compact) */}
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-white/10 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-gradient-to-br dark:from-zinc-900 dark:to-black flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-200 dark:ring-white/10 shrink-0">
                 <Image
                   src="/logo.svg"
                   alt="Alizubu"

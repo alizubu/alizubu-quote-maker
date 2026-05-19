@@ -33,8 +33,8 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         isDragging 
           ? 'shadow-2xl border-blue-400 bg-blue-500/20 scale-105' 
           : isSelected 
-            ? 'bg-gradient-to-br from-blue-500/15 to-purple-500/15 border-blue-400/60 shadow-lg shadow-blue-500/20' 
-            : 'bg-zinc-800/40 border-zinc-700/50 hover:bg-zinc-800/60 hover:border-zinc-600'
+            ? 'bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/15 dark:to-purple-500/15 border-blue-400/60 shadow-lg shadow-blue-500/20' 
+            : 'bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700/50 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 hover:border-zinc-300 dark:hover:border-zinc-600'
       }`}
     >
       {/* Selected Layer Gradient Overlay */}
@@ -52,7 +52,7 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         <div 
           {...attributes} 
           {...listeners} 
-          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all" 
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-white/10 transition-all" 
           title="Drag to reorder"
         >
           <GripVertical size={15} />
@@ -76,7 +76,7 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
           ) : (
             <p 
               className={`text-xs font-semibold truncate flex-1 transition-colors ${
-                isSelected ? 'text-white' : 'text-zinc-300 group-hover:text-white'
+                isSelected ? 'text-blue-600 dark:text-white' : 'text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white'
               }`} 
               onDoubleClick={(e) => { e.stopPropagation(); startRename(layer.id, layer.name); }}
             >
@@ -87,21 +87,21 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
 
         <button 
           onClick={(e) => { e.stopPropagation(); startRename(layer.id, layer.name); }} 
-          className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all active:scale-90" 
+          className="p-1.5 hover:bg-zinc-200 dark:hover:bg-white/10 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-all active:scale-90" 
           title="Rename"
         >
           <Edit3 size={13} />
         </button>
       </div>
 
-      <div className="relative z-10 flex justify-between items-center pt-2.5 border-t border-zinc-700/50" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-10 flex justify-between items-center pt-2.5 border-t border-zinc-200 dark:border-zinc-700/50" onClick={(e) => e.stopPropagation()}>
         <div className="flex gap-1.5">
           <button 
             onClick={() => toggleVisibility(layer.id)} 
             className={`p-2 sm:p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-all ${
               layer.visible 
-                ? 'hover:bg-white/10 text-zinc-400 hover:text-white' 
-                : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                ? 'hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white' 
+                : 'bg-red-500/10 dark:bg-red-500/20 text-red-500 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30'
             }`}
             title={layer.visible ? 'Hide layer' : 'Show layer'}
           >
@@ -112,8 +112,8 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
             onClick={() => toggleLock(layer.id)} 
             className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-all ${
               layer.locked 
-                ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' 
-                : 'hover:bg-white/10 text-zinc-400 hover:text-white'
+                ? 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 dark:hover:bg-amber-500/30' 
+                : 'hover:bg-zinc-200 dark:hover:bg-white/10 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white'
             }`}
             title={layer.locked ? 'Unlock layer' : 'Lock layer'}
           >
@@ -124,14 +124,14 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         <div className="flex gap-1.5">
           <button 
             onClick={() => duplicateLayer(layer.id)} 
-            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-blue-500/20 rounded-lg text-zinc-400 hover:text-blue-400 transition-all active:scale-90" 
+            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-blue-500/10 dark:hover:bg-blue-500/20 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all active:scale-90" 
             title="Duplicate"
           >
             <Copy size={14} />
           </button>
           <button 
             onClick={() => deleteLayer(layer.id)} 
-            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-red-500/20 rounded-lg text-zinc-500 hover:text-red-400 transition-all active:scale-90" 
+            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-all active:scale-90" 
             title="Delete"
           >
             <Trash2 size={14} />
@@ -170,21 +170,21 @@ export default function LayerPanel() {
       {isLayersOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden backdrop-blur-md animate-fade-in" onClick={() => setLayersOpen(false)} />}
       
       <div
-        className={`fixed top-0 left-0 h-full w-[85vw] max-w-[340px] sm:w-[320px] bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-r border-white/20 shadow-2xl z-50 transform transition-all duration-300 ease-out flex flex-col ${isLayersOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed top-0 left-0 h-full w-[85vw] max-w-[340px] sm:w-[320px] bg-white dark:bg-gradient-to-br dark:from-zinc-900 dark:via-black dark:to-zinc-900 border-r border-zinc-200 dark:border-white/20 shadow-2xl z-50 transform transition-all duration-300 ease-out flex flex-col ${isLayersOpen ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         
         {/* Header with Gradient */}
-        <div className="relative p-4 border-b border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl bg-black/60">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+        <div className="relative p-4 border-b border-zinc-200 dark:border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl bg-white/90 dark:bg-black/60">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 dark:from-blue-500/10 dark:via-purple-500/10 dark:to-pink-500/10"></div>
           
           <div className="relative flex items-center gap-2.5">
             <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl shadow-lg">
               <Layers size={16} className="text-white"/>
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">Layers</h2>
-              <p className="text-[9px] text-zinc-400">{layers.length} {layers.length === 1 ? 'layer' : 'layers'}</p>
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Layers</h2>
+              <p className="text-[9px] text-zinc-500 dark:text-zinc-400">{layers.length} {layers.length === 1 ? 'layer' : 'layers'}</p>
             </div>
           </div>
           
@@ -198,7 +198,7 @@ export default function LayerPanel() {
             </button>
             <button 
               onClick={() => setLayersOpen(false)} 
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90"
+              className="p-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 rounded-xl text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all active:scale-90"
             >
               <X size={16} />
             </button>
@@ -212,8 +212,8 @@ export default function LayerPanel() {
               <div className="p-4 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl mb-4 border border-zinc-700">
                 <Layers size={40} className="text-zinc-600" />
               </div>
-              <p className="text-sm font-semibold text-zinc-400 mb-2">No Layers Yet</p>
-              <p className="text-xs text-zinc-600 mb-4">Create your first layer to get started</p>
+              <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 mb-2">No Layers Yet</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-600 mb-4">Create your first layer to get started</p>
               <button 
                 onClick={() => addTextLayer({})}
                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-xl text-white text-xs font-bold transition-all shadow-lg active:scale-95"
@@ -243,8 +243,8 @@ export default function LayerPanel() {
         </div>
 
         {/* Footer Info */}
-        <div className="p-3 border-t border-white/10 bg-black/60 backdrop-blur-xl">
-          <div className="flex items-center justify-between text-[10px] text-zinc-500">
+        <div className="p-3 border-t border-zinc-200 dark:border-white/10 bg-zinc-50/80 dark:bg-black/60 backdrop-blur-xl">
+          <div className="flex items-center justify-between text-[10px] text-zinc-400 dark:text-zinc-500">
             <span className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
               Ready

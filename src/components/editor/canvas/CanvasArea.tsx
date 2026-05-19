@@ -77,7 +77,7 @@ export default function CanvasArea() {
     return () => window.removeEventListener('resize', updateSize);
   }, [canvasWidth, canvasHeight]); 
 
-  // Export Engine
+  // Export Engine — pixelRatio must be based on canvas logical size only, not display scale
   useEffect(() => {
     const handleDownload = (e: any) => {
       const targetWidth = e.detail?.targetWidth || canvasWidth; 
@@ -85,9 +85,11 @@ export default function CanvasArea() {
         setSelectedLayer(null);
         setMultiSelectedIds([]);
         setTimeout(() => {
-          const pixelRatio = targetWidth / (canvasWidth * (stageRef.current.scaleX() || 1));
+          // FIX: divide by canvasWidth (logical), NOT by the display-scaled stage size.
+          // Previously multiplying by stageRef.scaleX() caused wrong output dimensions when zoomed.
+          const pixelRatio = targetWidth / canvasWidth;
           const link = document.createElement('a');
-          link.download = `StoryMaker_${targetWidth}px.png`;
+          link.download = `Alizubu_${targetWidth}px.png`;
           link.href = stageRef.current.toDataURL({ pixelRatio, mimeType: 'image/png' });
           link.click();
         }, 150);
@@ -120,6 +122,17 @@ export default function CanvasArea() {
   const handleDoubleTap = (id: string, text: string) => { setLocalTextValue(text); setSelectedLayer(id); setTypingOverlayOpen(true); };
   const closeTypingOverlay = () => { if (selectedLayerId) updateLayer(selectedLayerId, { text: localTextValue } as any); setTypingOverlayOpen(false); };
 
+  // FIX #7: Listen for open-typing-overlay event from TextPanel so it pre-fills existing text
+  useEffect(() => {
+    const handler = (e: any) => {
+      setLocalTextValue(e.detail.text || '');
+      setSelectedLayer(e.detail.id);
+      setTypingOverlayOpen(true);
+    };
+    window.addEventListener('open-typing-overlay', handler);
+    return () => window.removeEventListener('open-typing-overlay', handler);
+  }, [setSelectedLayer, setTypingOverlayOpen]);
+
   const handleSnapMove = (e: any) => {
     const node = e.target; const width = node.width() * node.scaleX(); const height = node.height() * node.scaleY();
     const centerX = node.x() + width / 2; const centerY = node.y() + height / 2;
@@ -139,16 +152,16 @@ export default function CanvasArea() {
   const activeIdsForTr = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
 
   return (
-    <div ref={containerRef} className={`w-full h-full flex items-center justify-center bg-[#09090b] overflow-hidden relative ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+    <div ref={containerRef} className={`w-full h-full flex items-center justify-center bg-zinc-100 dark:bg-[#09090b] overflow-hidden relative transition-colors duration-300 ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}>
       <style dangerouslySetInnerHTML={{ __html: customFonts.map(f => `@font-face { font-family: '${f.name}'; src: url('${f.url}'); }`).join('\n') }} />
 
       {(stageScale !== 1 || stagePosition.x !== 0 || stagePosition.y !== 0) && (
-        <button onClick={resetWorkspace} className="absolute bottom-6 left-6 z-10 p-3 bg-black/50 hover:bg-blue-600 border border-white/10 rounded-full text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Reset View">
+        <button onClick={resetWorkspace} className="absolute bottom-6 left-6 z-10 p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Reset View">
            <Maximize size={16} />
         </button>
       )}
 
-      <div className="shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-white/10 pointer-events-auto" style={{ borderRadius: canvasWidth === 1080 && canvasHeight === 1080 ? '4px' : '12px' }}>
+      <div className="shadow-[0_0_50px_rgba(0,0,0,0.3)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-zinc-300/50 dark:border-white/10 pointer-events-auto" style={{ borderRadius: canvasWidth === 1080 && canvasHeight === 1080 ? '4px' : '12px' }}>
         <Stage 
           ref={stageRef} width={stageSize.width || 360} height={stageSize.height || 640} 
           scaleX={finalScale} scaleY={finalScale} x={stagePosition.x} y={stagePosition.y} draggable={isSpacePressed} onWheel={handleWheel}
@@ -164,7 +177,7 @@ export default function CanvasArea() {
               if (!layer.visible) return null;
               
               if (layer.type === 'image') {
-                return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} />;
+                return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} setSnapLines={setSnapLines} />;
               }
               
               if (layer.type === 'text') {

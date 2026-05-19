@@ -1,53 +1,57 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
   <defs>
-    <linearGradient id="logoGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+    <!-- Dark mode: bright red to deep dark -->
+    <linearGradient id="logoGradDark" x1="20%" y1="0%" x2="80%" y2="100%">
       <stop offset="0%" stop-color="#ff4500"/>
       <stop offset="35%" stop-color="#dc2626"/>
       <stop offset="70%" stop-color="#7f1d1d"/>
       <stop offset="100%" stop-color="#0a0000"/>
     </linearGradient>
-    <linearGradient id="logoStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#000" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#000" stop-opacity="0.95"/>
+    <!-- Light mode: same vibrant red, slightly adjusted for white bg -->
+    <linearGradient id="logoGradLight" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="35%" stop-color="#b91c1c"/>
+      <stop offset="70%" stop-color="#7f1d1d"/>
+      <stop offset="100%" stop-color="#3b0000"/>
     </linearGradient>
-    <filter id="logoShadow" x="-30%" y="-30%" width="160%" height="160%">
+    <linearGradient id="logoStrokeDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="logoStrokeLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7f1d1d" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#3b0000" stop-opacity="0.7"/>
+    </linearGradient>
+    <filter id="logoShadowDark" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="logoShadowLight" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#7f1d1d" flood-opacity="0.25"/>
     </filter>
   </defs>
 
-  <g filter="url(#logoShadow)" stroke="url(#logoStroke)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-    <!-- Main angular A/Z hybrid mark -->
-    <path fill="url(#logoGrad)" d="
-      M 40 18
-      L 78 18
-      L 168 178
-      L 130 178
-      L 118 156
-      L 70 156
-      L 70 124
-      L 100 124
-      L 78 84
-      L 70 84
-      L 70 110
-      L 38 110
-      L 38 70
-      L 50 70
-      Z
-    "/>
-    <!-- Accent blade -->
-    <path fill="url(#logoGrad)" opacity="0.9" d="
-      M 96 60
-      L 132 124
-      L 110 124
-      L 84 78
-      Z
-    "/>
-    <!-- Sharp triangular highlight -->
-    <path fill="url(#logoGrad)" opacity="0.75" d="
-      M 50 30
-      L 60 30
-      L 56 46
-      Z
-    "/>
+  <!-- Dark mode version -->
+  <g class="logo-dark" filter="url(#logoShadowDark)" stroke="url(#logoStrokeDark)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#logoGradDark)" d="M 40 18 L 78 18 L 168 178 L 130 178 L 118 156 L 70 156 L 70 124 L 100 124 L 78 84 L 70 84 L 70 110 L 38 110 L 38 70 L 50 70 Z"/>
+    <path fill="url(#logoGradDark)" opacity="0.9" d="M 96 60 L 132 124 L 110 124 L 84 78 Z"/>
+    <path fill="url(#logoGradDark)" opacity="0.75" d="M 50 30 L 60 30 L 56 46 Z"/>
   </g>
+
+  <!-- Light mode version (hidden by default, shown via CSS) -->
+  <g class="logo-light" filter="url(#logoShadowLight)" stroke="url(#logoStrokeLight)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="url(#logoGradLight)" d="M 40 18 L 78 18 L 168 178 L 130 178 L 118 156 L 70 156 L 70 124 L 100 124 L 78 84 L 70 84 L 70 110 L 38 110 L 38 70 L 50 70 Z"/>
+    <path fill="url(#logoGradLight)" opacity="0.9" d="M 96 60 L 132 124 L 110 124 L 84 78 Z"/>
+    <path fill="url(#logoGradLight)" opacity="0.75" d="M 50 30 L 60 30 L 56 46 Z"/>
+  </g>
+
+  <style>
+    /* Default: show dark, hide light */
+    .logo-dark { display: block; }
+    .logo-light { display: none; }
+    /* When OS prefers light mode */
+    @media (prefers-color-scheme: light) {
+      .logo-dark { display: none; }
+      .logo-light { display: block; }
+    }
+  </style>
 </svg>
