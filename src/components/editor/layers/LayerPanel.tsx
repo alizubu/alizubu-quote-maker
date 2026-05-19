@@ -98,7 +98,7 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         <div className="flex gap-1.5">
           <button 
             onClick={() => toggleVisibility(layer.id)} 
-            className={`p-2 rounded-lg transition-all ${
+            className={`p-2 sm:p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-all ${
               layer.visible 
                 ? 'hover:bg-white/10 text-zinc-400 hover:text-white' 
                 : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
@@ -110,7 +110,7 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
           
           <button 
             onClick={() => toggleLock(layer.id)} 
-            className={`p-2 rounded-lg transition-all ${
+            className={`p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg transition-all ${
               layer.locked 
                 ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' 
                 : 'hover:bg-white/10 text-zinc-400 hover:text-white'
@@ -124,14 +124,14 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         <div className="flex gap-1.5">
           <button 
             onClick={() => duplicateLayer(layer.id)} 
-            className="p-2 hover:bg-blue-500/20 rounded-lg text-zinc-400 hover:text-blue-400 transition-all active:scale-90" 
+            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-blue-500/20 rounded-lg text-zinc-400 hover:text-blue-400 transition-all active:scale-90" 
             title="Duplicate"
           >
             <Copy size={14} />
           </button>
           <button 
             onClick={() => deleteLayer(layer.id)} 
-            className="p-2 hover:bg-red-500/20 rounded-lg text-zinc-500 hover:text-red-400 transition-all active:scale-90" 
+            className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-red-500/20 rounded-lg text-zinc-500 hover:text-red-400 transition-all active:scale-90" 
             title="Delete"
           >
             <Trash2 size={14} />
@@ -167,9 +167,12 @@ export default function LayerPanel() {
 
   return (
     <>
-      {isLayersOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden backdrop-blur-md" onClick={() => setLayersOpen(false)} />}
+      {isLayersOpen && <div className="fixed inset-0 bg-black/70 z-40 md:hidden backdrop-blur-md animate-fade-in" onClick={() => setLayersOpen(false)} />}
       
-      <div className={`fixed top-0 left-0 h-full w-[320px] bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-r border-white/20 shadow-2xl z-50 transform transition-all duration-300 ease-out flex flex-col ${isLayersOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div
+        className={`fixed top-0 left-0 h-full w-[85vw] max-w-[340px] sm:w-[320px] bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-r border-white/20 shadow-2xl z-50 transform transition-all duration-300 ease-out flex flex-col ${isLayersOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         
         {/* Header with Gradient */}
         <div className="relative p-4 border-b border-white/10 flex justify-between items-center sticky top-0 z-10 backdrop-blur-xl bg-black/60">

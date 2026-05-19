@@ -84,9 +84,12 @@ export default function ControlPanel() {
       </div>
 
       {/* BOTTOM NAVIGATION TABS WITH GLASSMORPHISM */}
-      <div className="relative shrink-0 z-20 pb-6 md:pb-4">
+      <div
+        className="relative shrink-0 z-20 pb-3 md:pb-4"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-black dark:via-black/95 dark:to-transparent backdrop-blur-xl"></div>
-        <div className="relative flex gap-2 p-3">
+        <div className="relative flex gap-1.5 sm:gap-2 p-2.5 sm:p-3">
           {[
             { id: 'bg', icon: <Palette size={18} />, label: 'Background', gradient: 'from-orange-500 to-red-500' },
             { id: 'edit', icon: <Type size={18} />, label: 'Edit', gradient: 'from-blue-500 to-cyan-500' },
@@ -95,9 +98,9 @@ export default function ControlPanel() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)} 
-              className={`relative flex-1 flex flex-col justify-center items-center gap-1.5 py-3.5 rounded-2xl transition-all duration-300 overflow-hidden group ${
+              className={`relative flex-1 min-h-[58px] flex flex-col justify-center items-center gap-1 sm:gap-1.5 py-3 sm:py-3.5 rounded-2xl transition-all duration-300 overflow-hidden group active:scale-95 ${
                 activeTab === tab.id 
-                  ? 'shadow-lg scale-105' 
+                  ? 'shadow-lg' 
                   : 'hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400'
               }`}
             >
@@ -110,7 +113,7 @@ export default function ControlPanel() {
               <div className={`relative z-10 transition-all ${activeTab === tab.id ? 'text-white scale-110' : ''}`}>
                 {tab.icon}
               </div>
-              <span className={`relative z-10 text-[10px] font-bold tracking-wider transition-all ${
+              <span className={`relative z-10 text-[9px] sm:text-[10px] font-bold tracking-wider transition-all ${
                 activeTab === tab.id ? 'text-white' : ''
               }`}>
                 {tab.label}
