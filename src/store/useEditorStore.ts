@@ -55,7 +55,35 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     // Layer Actions
     addTextLayer: (attrs) => { get().saveHistory(); set((state) => ({ layers: [...state.layers, { id: Date.now().toString(), name: `Text ${state.layers.length + 1}`, type: 'text', text: 'Double Tap to Edit 📝', fontSize: 40, fontFamily: 'sans-serif', isBold: false, isItalic: false, isUnderline: false, fill: '#000000', isGradient: false, gradientType: 'linear', gradientColors: ['#f6d365', '#fda085'], x: state.canvasWidth / 2 - 150, y: state.canvasHeight / 2, rotation: 0, scaleX: 1, scaleY: 1, opacity: 1, blendMode: 'source-over', align: 'center', letterSpacing: 0, lineHeight: 1.2, shadowColor: '#000000', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0, stroke: 'transparent', strokeWidth: 0, strokeType: 'outer', visible: true, locked: false, ...attrs } as TextLayer], selectedLayerId: null, multiSelectedIds: [] })); },
-    addImageLayer: (url) => { get().saveHistory(); set((state) => ({ layers: [...state.layers, { id: Date.now().toString(), name: `Image ${state.layers.length + 1}`, type: 'image', url: url, x: state.canvasWidth / 2 - 150, y: state.canvasHeight / 2, rotation: 0, scaleX: 1, scaleY: 1, opacity: 1, blendMode: 'source-over', visible: true, locked: false } as ImageLayer], selectedLayerId: null, multiSelectedIds: [] })); },
+    addImageLayer: (url) => {
+      get().saveHistory();
+      const newId = Date.now().toString();
+      set((state) => ({
+        layers: [
+          ...state.layers,
+          {
+            id: newId,
+            name: `Image ${state.layers.length + 1}`,
+            type: 'image',
+            url: url,
+            x: state.canvasWidth / 2 - 150,
+            y: state.canvasHeight / 2 - 150,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+            opacity: 1,
+            blendMode: 'source-over',
+            visible: true,
+            locked: false,
+          } as ImageLayer,
+        ],
+        // Auto-select the new image so the Transformer attaches immediately
+        selectedLayerId: newId,
+        multiSelectedIds: [newId],
+        // Auto-open the layers panel so user can see the new layer
+        isLayersOpen: true,
+      }));
+    },
     updateLayer: (id, attrs) => set((state) => ({ layers: state.layers.map((l) => (l.id === id ? { ...l, ...attrs } : l)) as CanvasLayer[] })),
     renameLayer: (id, newName) => { get().saveHistory(); set((state) => ({ layers: state.layers.map((l) => (l.id === id ? { ...l, name: newName } : l)) as CanvasLayer[] })); },
     deleteLayer: (id) => { get().saveHistory(); set((state) => ({ layers: state.layers.filter((l) => l.id !== id), selectedLayerId: state.selectedLayerId === id ? null : state.selectedLayerId, multiSelectedIds: state.multiSelectedIds.filter(mId => mId !== id) })); },
