@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "../components/ThemeProvider";
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
+
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Alizubu Quote Maker",
+  title: "alizubu Quote Maker",
   description: "Professional Web-based Canvas Editor",
 };
 
