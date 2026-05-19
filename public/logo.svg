@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#ff4500"/>
+      <stop offset="35%" stop-color="#dc2626"/>
+      <stop offset="70%" stop-color="#7f1d1d"/>
+      <stop offset="100%" stop-color="#0a0000"/>
+    </linearGradient>
+    <linearGradient id="logoStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.95"/>
+    </linearGradient>
+    <filter id="logoShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#logoShadow)" stroke="url(#logoStroke)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Main angular A/Z hybrid mark -->
+    <path fill="url(#logoGrad)" d="
+      M 40 18
+      L 78 18
+      L 168 178
+      L 130 178
+      L 118 156
+      L 70 156
+      L 70 124
+      L 100 124
+      L 78 84
+      L 70 84
+      L 70 110
+      L 38 110
+      L 38 70
+      L 50 70
+      Z
+    "/>
+    <!-- Accent blade -->
+    <path fill="url(#logoGrad)" opacity="0.9" d="
+      M 96 60
+      L 132 124
+      L 110 124
+      L 84 78
+      Z
+    "/>
+    <!-- Sharp triangular highlight -->
+    <path fill="url(#logoGrad)" opacity="0.75" d="
+      M 50 30
+      L 60 30
+      L 56 46
+      Z
+    "/>
+  </g>
+</svg>
