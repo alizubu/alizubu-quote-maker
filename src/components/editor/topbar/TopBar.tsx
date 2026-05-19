@@ -105,9 +105,9 @@ const TopBar = () => {
     if (file) {
       const url = URL.createObjectURL(file);
       addImageLayer(url);
-      // FIX #9: revoke the object URL after Konva has loaded the image
-      // (short timeout so Konva can finish loading before we revoke)
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      // NOTE: blob URL রevokeকরা যাবে না কারণ image layer active থাকাকালীন
+      // URL revoke হলে image load/reload করতে পারবে না।
+      // Blob URL গুলো page reload-এ automatically clean হয়।
     }
     e.target.value = '';
   };
