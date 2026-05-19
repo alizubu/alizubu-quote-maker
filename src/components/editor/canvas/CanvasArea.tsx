@@ -103,20 +103,40 @@ export default function CanvasArea() {
 
   // Transformer Logic (Updated for Multi-Select)
   useEffect(() => {
-    const activeIds = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
-    if (activeIds.length > 0 && trRef.current && stageRef.current && !isTypingOverlayOpen) {
-      const nodes = activeIds.map(id => stageRef.current.findOne(`#layer-${id}`)).filter(Boolean);
-      const validNodes = nodes.filter(node => {
+    const attach = () => {
+      if (!trRef.current || !stageRef.current) return;
+      const activeIds = multiSelectedIds.length > 0
+        ? multiSelectedIds
+        : selectedLayerId ? [selectedLayerId] : [];
+
+      if (activeIds.length === 0 || isTypingOverlayOpen) {
+        trRef.current.nodes([]);
+        return;
+      }
+
+      const nodes = activeIds
+        .map((id: string) => stageRef.current.findOne(`#layer-${id}`))
+        .filter(Boolean);
+
+      const validNodes = nodes.filter((node: any) => {
         const l = layers.find(layer => layer.id === node.id().replace('layer-', ''));
         return l && !l.locked && l.visible;
       });
+
       if (validNodes.length > 0) {
         trRef.current.nodes(validNodes);
-        trRef.current.getLayer().batchDraw();
+        trRef.current.getLayer()?.batchDraw();
       } else {
         trRef.current.nodes([]);
       }
-    } else if (trRef.current) trRef.current.nodes([]);
+    };
+
+    // Run immediately (for text layers which render synchronously)
+    attach();
+    // Also run after a short delay so freshly-added image nodes
+    // (which load asynchronously via useImage) are found in the stage
+    const t = setTimeout(attach, 80);
+    return () => clearTimeout(t);
   }, [selectedLayerId, multiSelectedIds, layers, isTypingOverlayOpen]);
 
   const handleDoubleTap = (id: string, text: string) => { setLocalTextValue(text); setSelectedLayer(id); setTypingOverlayOpen(true); };
