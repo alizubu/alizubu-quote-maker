@@ -25,25 +25,21 @@ export default function ThemeToggle({ variant = 'icon', className = '' }: ThemeT
 
   // --- Simple Icon Toggle (default) ---
   if (variant === 'icon') {
-    const cycle = () => {
-      // Cycle: dark -> light -> system -> dark
-      if (theme === 'dark') setTheme('light');
-      else if (theme === 'light') setTheme('system');
-      else setTheme('dark');
-    };
+    // Simple binary toggle: light <-> dark (more intuitive than 3-way cycle)
+    const isDark = current === 'dark';
+    const toggle = () => setTheme(isDark ? 'light' : 'dark');
 
-    const Icon = theme === 'system' ? Monitor : current === 'dark' ? Moon : Sun;
-    const label =
-      theme === 'system' ? 'System' : current === 'dark' ? 'Dark' : 'Light';
+    const Icon = isDark ? Sun : Moon; // show what you'll switch TO
+    const label = isDark ? 'Switch to Light' : 'Switch to Dark';
 
     return (
       <button
-        onClick={cycle}
-        title={`Theme: ${label} (click to change)`}
-        aria-label={`Switch theme. Current: ${label}`}
-        className={`relative p-2 sm:p-2.5 bg-white/5 hover:bg-white/15 backdrop-blur-sm rounded-lg sm:rounded-xl text-white border border-white/10 transition-all shadow-lg hover:shadow-xl active:scale-95 hover:border-white/30 ${className}`}
+        onClick={toggle}
+        title={label}
+        aria-label={label}
+        className={`flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm rounded-xl text-zinc-700 dark:text-white border border-zinc-200 dark:border-white/15 transition-all shadow-sm dark:shadow-lg hover:shadow-md dark:hover:shadow-xl active:scale-95 dark:hover:border-white/40 ${className}`}
       >
-        <Icon size={16} className="sm:w-[18px] sm:h-[18px] transition-transform duration-300" />
+        <Icon size={17} className="transition-transform duration-300" />
       </button>
     );
   }

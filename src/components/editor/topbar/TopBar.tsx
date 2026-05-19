@@ -120,18 +120,18 @@ const TopBar = () => {
 
   // Reusable icon button - bigger touch target on mobile (44x44 min)
   const iconBtnClass =
-    'flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 bg-white/5 hover:bg-white/15 backdrop-blur-sm rounded-xl text-white border border-white/10 transition-all shadow-lg hover:shadow-xl active:scale-95 hover:border-white/30';
+    'flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/15 backdrop-blur-sm rounded-xl text-zinc-700 dark:text-white border border-zinc-200 dark:border-white/10 transition-all shadow-sm dark:shadow-lg hover:shadow-md dark:hover:shadow-xl active:scale-95 dark:hover:border-white/30';
 
   return (
     <>
       {/* ============ TOP BAR CONTAINER ============ */}
       <div className="absolute top-0 left-0 w-full p-2 sm:p-4 z-20 pointer-events-none">
-        <div className="max-w-[2000px] mx-auto bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-2 sm:p-3 pointer-events-auto">
+        <div className="max-w-[2000px] mx-auto bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-zinc-200/60 dark:border-white/20 rounded-2xl shadow-2xl p-2 sm:p-3 pointer-events-auto">
           {/* === DESKTOP / TABLET LAYOUT (sm+) === */}
           <div className="hidden sm:flex justify-between items-center gap-3">
             {/* Left: Logo + Brand */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2.5 pr-3 border-r border-white/20">
+              <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-300/50 dark:border-white/20">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-zinc-900 to-black flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-white/10">
                   <Image
                     src="/logo.svg"
@@ -143,8 +143,8 @@ const TopBar = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-white font-bold text-xs leading-none tracking-wide">Alizubu</span>
-                  <span className="text-white/60 text-[9px] leading-none font-medium mt-0.5">Quote Maker</span>
+                  <span className="text-zinc-900 dark:text-white font-bold text-xs leading-none tracking-wide">Alizubu</span>
+                  <span className="text-zinc-500 dark:text-white/60 text-[9px] leading-none font-medium mt-0.5">Quote Maker</span>
                 </div>
               </div>
 

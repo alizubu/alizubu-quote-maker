@@ -54,7 +54,7 @@ export default function EditorPage() {
 
   return (
     <main
-      className="h-[100dvh] w-screen bg-black text-white flex flex-col md:flex-row overflow-hidden font-sans selection:bg-purple-500/30 relative"
+      className="h-[100dvh] w-screen bg-white dark:bg-black text-zinc-900 dark:text-white flex flex-col md:flex-row overflow-hidden font-sans selection:bg-purple-500/30 relative transition-colors duration-300"
       style={{
         // iOS safe areas
         paddingTop: 'env(safe-area-inset-top)',
@@ -62,13 +62,13 @@ export default function EditorPage() {
       }}
     >
       {/* ============ CANVAS AREA ============ */}
-      <div className="flex-none h-[58dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-950 via-black to-zinc-900 overflow-hidden">
+      <div className="flex-none h-[58dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300">
         {/* Animated Background Pattern (lighter on mobile for performance) */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1),transparent_50%)]" />
-          <div className="hidden sm:block absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.15),transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1),transparent_50%)]" />
+          <div className="hidden sm:block absolute top-1/4 right-1/4 w-96 h-96 bg-blue-400/15 dark:bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
           <div
-            className="hidden sm:block absolute bottom-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"
+            className="hidden sm:block absolute bottom-1/4 left-1/4 w-96 h-96 bg-purple-400/15 dark:bg-purple-500/10 rounded-full blur-3xl animate-pulse"
             style={{ animationDelay: '1s' }}
           />
         </div>
@@ -78,7 +78,7 @@ export default function EditorPage() {
       </div>
 
       {/* ============ CONTROL PANEL ============ */}
-      <div className="flex-1 md:w-[380px] md:flex-none border-t md:border-t-0 md:border-l border-zinc-800/50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.6)] flex flex-col z-10 min-h-0 overflow-hidden">
+      <div className="flex-1 md:w-[380px] md:flex-none border-t md:border-t-0 md:border-l border-zinc-200 dark:border-zinc-800/50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.1)] md:dark:shadow-[-20px_0_60px_rgba(0,0,0,0.6)] flex flex-col z-10 min-h-0 overflow-hidden transition-colors duration-300">
         <ControlPanel />
       </div>
 
