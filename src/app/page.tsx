@@ -45,39 +45,105 @@ export default function EditorPage() {
   useHotkeys('ctrl+d, meta+d', () => { if (selectedLayerId) duplicateLayer(selectedLayerId); }, { preventDefault: true }, [selectedLayerId]);
 
   return (
-    <main className="h-[100dvh] w-screen bg-black text-white flex flex-col md:flex-row overflow-hidden font-sans selection:bg-white/30 relative">
+    <main className="h-[100dvh] w-screen bg-black text-white flex flex-col md:flex-row overflow-hidden font-sans selection:bg-purple-500/30 relative">
       
-      {/* Canvas Layer */}
-      <div className="flex-none h-[55dvh] md:h-full md:flex-1 relative bg-[#09090b]">
+      {/* Canvas Area with Professional Background */}
+      <div className="flex-none h-[55dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-950 via-black to-zinc-900 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1),transparent_50%)]"></div>
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        </div>
+        
         <TopBar />
         <CanvasArea />
       </div>
 
-      {/* Control Panel Layer */}
-      <div className="flex-1 md:w-[380px] md:flex-none bg-[#0c0c0e] border-t md:border-l border-white/10 shadow-xl flex flex-col z-10 min-h-0 overflow-hidden">
+      {/* Control Panel with Enhanced Shadow */}
+      <div className="flex-1 md:w-[380px] md:flex-none border-t md:border-t-0 md:border-l border-zinc-800/50 shadow-[-10px_0_40px_rgba(0,0,0,0.5)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.6)] flex flex-col z-10 min-h-0 overflow-hidden">
         <ControlPanel />
       </div>
 
-      {/* --- EXPORT MODAL --- */}
+      {/* --- ENHANCED EXPORT MODAL --- */}
       {isExportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-gradient-to-b from-zinc-900 to-black border border-white/10 p-5 rounded-3xl w-full max-w-sm shadow-2xl relative space-y-5 animate-in zoom-in-95 duration-200">
-            <button onClick={() => setExportModalOpen(false)} className="absolute top-4 right-4 p-1.5 bg-white/5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors">
-              <X size={15} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+          <div className="relative bg-gradient-to-br from-zinc-900/98 via-black/98 to-zinc-900/98 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl w-full max-w-md shadow-[0_20px_70px_rgba(0,0,0,0.9)] animate-scale-in">
+            
+            {/* Gradient Glow Effect */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-2xl opacity-50 -z-10"></div>
+            
+            <button 
+              onClick={() => setExportModalOpen(false)} 
+              className="absolute top-4 right-4 p-2 bg-white/5 hover:bg-white/10 rounded-xl text-zinc-400 hover:text-white transition-all active:scale-90 hover-lift"
+            >
+              <X size={18} />
             </button>
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold tracking-wider text-white uppercase flex items-center gap-1.5"><Sparkles size={15} className="text-blue-400 animate-pulse" /> Export Engine</h3>
-              <p className="text-[11px] text-zinc-400">Select output resolution. Emojis and text fonts will be vector-upscaled automatically.</p>
+
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl shadow-lg">
+                  <Sparkles size={20} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Export Your Design</h3>
+                  <p className="text-[10px] text-zinc-400">Choose quality for best results</p>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
+
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar mb-6">
               {qualityOptions.map((opt) => (
-                <div key={opt.width} onClick={() => setSelectedQuality(opt.width)} className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex justify-between items-center ${selectedQuality === opt.width ? 'bg-blue-600/10 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]' : 'bg-white/5 border-white/5 hover:border-zinc-700/50'}`}>
-                  <div><p className={`text-xs font-semibold ${selectedQuality === opt.width ? 'text-blue-400' : 'text-white'}`}>{opt.label}</p><p className="text-[10px] text-zinc-400 mt-0.5">{opt.sub}</p></div>
-                  {selectedQuality === opt.width && <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />}
+                <div 
+                  key={opt.width} 
+                  onClick={() => setSelectedQuality(opt.width)} 
+                  className={`relative p-4 rounded-2xl border cursor-pointer transition-all flex justify-between items-center group overflow-hidden ${
+                    selectedQuality === opt.width 
+                      ? 'bg-gradient-to-r from-blue-500/15 to-purple-500/15 border-blue-400/60 shadow-[0_0_30px_rgba(59,130,246,0.25)]' 
+                      : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'
+                  }`}
+                >
+                  {selectedQuality === opt.width && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 animate-pulse"></div>
+                  )}
+                  
+                  <div className="relative z-10">
+                    <p className={`text-sm font-bold mb-1 transition-colors ${
+                      selectedQuality === opt.width 
+                        ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400' 
+                        : 'text-zinc-200 group-hover:text-white'
+                    }`}>
+                      {opt.label}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 flex items-center gap-1.5">
+                      <span className="font-mono">{opt.width}p</span>
+                      <span className="text-zinc-600">•</span>
+                      <span>{opt.sub}</span>
+                    </p>
+                  </div>
+                  
+                  {selectedQuality === opt.width ? (
+                    <div className="relative z-10 w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/50">
+                      <ShieldCheck size={16} strokeWidth={2.5} />
+                    </div>
+                  ) : (
+                    <div className="relative z-10 w-7 h-7 rounded-full border-2 border-zinc-700 group-hover:border-zinc-500 transition-colors"></div>
+                  )}
                 </div>
               ))}
             </div>
-            <button onClick={triggerDownloadAction} className="w-full bg-white text-black hover:bg-zinc-200 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-1.5"><ShieldCheck size={15} /> Download Now</button>
+
+            <button 
+              onClick={triggerDownloadAction} 
+              className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white font-bold py-3.5 rounded-2xl text-sm uppercase tracking-wider transition-all shadow-[0_10px_40px_rgba(139,92,246,0.4)] hover:shadow-[0_15px_50px_rgba(139,92,246,0.6)] active:scale-[0.98] flex items-center justify-center gap-2 hover-lift"
+            >
+              <ShieldCheck size={18} strokeWidth={2.5} /> 
+              <span>Download Now</span>
+            </button>
+            
+            <p className="text-center text-[9px] text-zinc-600 mt-3">
+              High-quality export with vector scaling
+            </p>
           </div>
         </div>
       )}
