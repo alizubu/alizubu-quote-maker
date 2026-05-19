@@ -126,7 +126,10 @@ const TopBar = () => {
     <>
       {/* ============ TOP BAR CONTAINER ============ */}
       <div className="absolute top-0 left-0 w-full p-2 sm:p-4 z-20 pointer-events-none">
-        <div className="max-w-[2000px] mx-auto bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-zinc-200/60 dark:border-white/20 rounded-2xl shadow-2xl p-2 sm:p-3 pointer-events-auto">
+        <div
+          data-topbar-shell
+          className="max-w-[2000px] mx-auto bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-zinc-200/60 dark:border-white/20 rounded-2xl shadow-2xl p-2 sm:p-3 pointer-events-auto"
+        >
           {/* === DESKTOP / TABLET LAYOUT (sm+) === */}
           <div className="hidden sm:flex justify-between items-center gap-3">
             {/* Left: Logo + Brand */}
@@ -143,14 +146,15 @@ const TopBar = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-zinc-900 dark:text-white font-bold text-xs leading-none tracking-wide">Alizubu</span>
-                  <span className="text-zinc-500 dark:text-white/60 text-[9px] leading-none font-medium mt-0.5">Quote Maker</span>
+                  <span data-brand-text className="text-zinc-900 dark:text-white font-bold text-xs leading-none tracking-wide">Alizubu</span>
+                  <span data-brand-subtext className="text-zinc-500 dark:text-white/60 text-[9px] leading-none font-medium mt-0.5">Quote Maker</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1.5">
                 <button
+                  data-icon-btn
                   onClick={() => setLayersOpen(!isLayersOpen)}
                   className={iconBtnClass}
                   title="Toggle Layers"
@@ -159,6 +163,7 @@ const TopBar = () => {
                 </button>
 
                 <button
+                  data-icon-btn
                   onClick={() => fileInputRef.current?.click()}
                   className={iconBtnClass}
                   title="Open Project"
@@ -167,6 +172,7 @@ const TopBar = () => {
                 </button>
 
                 <button
+                  data-icon-btn
                   onClick={() => stickerInputRef.current?.click()}
                   className={iconBtnClass}
                   title="Add Image/Sticker"
@@ -193,7 +199,7 @@ const TopBar = () => {
             <div className="flex items-center gap-1.5">
               <ThemeToggle variant="icon" />
 
-              <button onClick={handleSaveProject} className={iconBtnClass} title="Save Project">
+              <button data-icon-btn onClick={handleSaveProject} className={iconBtnClass} title="Save Project">
                 <Save size={17} />
               </button>
 
@@ -312,7 +318,7 @@ const TopBar = () => {
         </div>
       </div>
 
-      {/* Hidden file inputs for mobile (since menu uses refs) */}
+      {/* Hidden file inputs — one pair, shared by desktop + mobile */}
       <input
         type="file"
         ref={fileInputRef}

@@ -1,16 +1,14 @@
-/* 1. Imports must be at the very top (Hind Siliguri Added) */
+/* 1. Imports must be at the very top */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600&family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@300;500;700&family=Playfair+Display:ital,wght@0,400;0,700&display=swap');
 @import "tailwindcss";
 
-/* ⚡ TAILWIND v4 CRITICAL FIX:
- * By default Tailwind v4 makes `dark:` variants respond to the OS's
- * prefers-color-scheme media query (NOT class-based).
- * next-themes toggles a `dark` class on <html>, so we must redefine
- * the `dark` variant to be class-based, otherwise the toggle has
- * zero visual effect.
- * Reference: https://tailwindcss.com/docs/dark-mode#using-a-data-attribute
+/*
+ * TAILWIND v4 DARK MODE FIX
+ * Tailwind v4 defaults dark: to prefers-color-scheme (OS setting).
+ * next-themes sets a .dark class on <html>, so we must override.
+ * Correct Tailwind v4 syntax:
  */
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:is(.dark, .dark *));
 
 /* --- Base Themes Setup --- */
 @layer base {
@@ -319,3 +317,7 @@ canvas {
     -webkit-backdrop-filter: blur(10px);
   }
 }
+
+/* color-scheme hint — prevents flash before hydration */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
