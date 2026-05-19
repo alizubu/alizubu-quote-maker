@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Group, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
 
@@ -16,6 +16,7 @@ export default function ImageNode({
   updateLayer,
   handleSnap,
   setSnapLines,
+  onImageLoaded,
 }: any) {
   // CRITICAL FIX: blob: URLs created by URL.createObjectURL() MUST NOT
   // use crossOrigin='anonymous'. Passing it causes a CORS error and the
@@ -26,7 +27,14 @@ export default function ImageNode({
 
   const [img, status] = useImage(layer.url, crossOrigin);
 
-  // Effective display dimensions
+  // Image load হলে parent-কে notify করো যাতে Transformer re-attach করতে পারে
+  useEffect(() => {
+    if (img && onImageLoaded) {
+      onImageLoaded(layer.id);
+    }
+  }, [img, layer.id, onImageLoaded]);
+
+  // Effective display dimensions — image load হওয়ার আগে fallback হিসেবে 300x300 দাও
   const W = layer.cropArea?.width  ?? img?.width  ?? 300;
   const H = layer.cropArea?.height ?? img?.height ?? 300;
 

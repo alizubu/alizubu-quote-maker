@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Stage, Layer, Rect, Image as KonvaImage, Transformer, Line } from 'react-konva';
 import { useEditorStore } from '../../../store/useEditorStore';
 import useImage from 'use-image';
@@ -101,43 +101,58 @@ export default function CanvasArea() {
 
   useEffect(() => { if (bgImg && bgImageRef.current) bgImageRef.current.cache(); }, [bgImg, bgBlur, bgBrightness]);
 
+  // Transformer attach — shared helper function
+  const attachTransformer = useCallback(() => {
+    if (!trRef.current || !stageRef.current) return;
+    const activeIds = multiSelectedIds.length > 0
+      ? multiSelectedIds
+      : selectedLayerId ? [selectedLayerId] : [];
+
+    if (activeIds.length === 0 || isTypingOverlayOpen) {
+      trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
+      return;
+    }
+
+    const nodes = activeIds
+      .map((id: string) => stageRef.current.findOne(`#layer-${id}`))
+      .filter(Boolean);
+
+    const validNodes = nodes.filter((node: any) => {
+      const l = layers.find(layer => layer.id === node.id().replace('layer-', ''));
+      return l && !l.locked && l.visible;
+    });
+
+    if (validNodes.length > 0) {
+      trRef.current.nodes(validNodes);
+      trRef.current.getLayer()?.batchDraw();
+    } else {
+      trRef.current.nodes([]);
+      trRef.current.getLayer()?.batchDraw();
+    }
+  }, [selectedLayerId, multiSelectedIds, layers, isTypingOverlayOpen]);
+
   // Transformer Logic (Updated for Multi-Select)
   useEffect(() => {
-    const attach = () => {
-      if (!trRef.current || !stageRef.current) return;
-      const activeIds = multiSelectedIds.length > 0
-        ? multiSelectedIds
-        : selectedLayerId ? [selectedLayerId] : [];
-
-      if (activeIds.length === 0 || isTypingOverlayOpen) {
-        trRef.current.nodes([]);
-        return;
-      }
-
-      const nodes = activeIds
-        .map((id: string) => stageRef.current.findOne(`#layer-${id}`))
-        .filter(Boolean);
-
-      const validNodes = nodes.filter((node: any) => {
-        const l = layers.find(layer => layer.id === node.id().replace('layer-', ''));
-        return l && !l.locked && l.visible;
-      });
-
-      if (validNodes.length > 0) {
-        trRef.current.nodes(validNodes);
-        trRef.current.getLayer()?.batchDraw();
-      } else {
-        trRef.current.nodes([]);
-      }
-    };
-
     // Run immediately (for text layers which render synchronously)
-    attach();
-    // Also run after a short delay so freshly-added image nodes
+    attachTransformer();
+    // Also run after short delays so freshly-added image nodes
     // (which load asynchronously via useImage) are found in the stage
-    const t = setTimeout(attach, 80);
-    return () => clearTimeout(t);
-  }, [selectedLayerId, multiSelectedIds, layers, isTypingOverlayOpen]);
+    const t1 = setTimeout(attachTransformer, 100);
+    const t2 = setTimeout(attachTransformer, 400);
+    const t3 = setTimeout(attachTransformer, 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [attachTransformer]);
+
+  // Image load হলে Transformer re-attach করার callback
+  const handleImageLoaded = useCallback((layerId: string) => {
+    // শুধু selected layer-এর জন্য re-attach করো
+    const activeIds = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
+    if (activeIds.includes(layerId)) {
+      // একটু দেরিতে attach করো যাতে Konva node ঠিকমতো render হয়
+      setTimeout(attachTransformer, 50);
+    }
+  }, [selectedLayerId, multiSelectedIds, attachTransformer]);
 
   const handleDoubleTap = (id: string, text: string) => { setLocalTextValue(text); setSelectedLayer(id); setTypingOverlayOpen(true); };
   const closeTypingOverlay = () => { if (selectedLayerId) updateLayer(selectedLayerId, { text: localTextValue } as any); setTypingOverlayOpen(false); };
@@ -197,7 +212,7 @@ export default function CanvasArea() {
               if (!layer.visible) return null;
               
               if (layer.type === 'image') {
-                return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} setSnapLines={setSnapLines} />;
+                return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} setSnapLines={setSnapLines} onImageLoaded={handleImageLoaded} />;
               }
               
               if (layer.type === 'text') {

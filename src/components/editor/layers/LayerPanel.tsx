@@ -23,6 +23,15 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
 
   const isSelected = selectedLayerId === layer.id;
   const isTextLayer = layer.type === 'text';
+  const isImageLayer = layer.type === 'image';
+
+  const layerIconStyle = isTextLayer
+    ? 'bg-blue-500/20 text-blue-400'
+    : isImageLayer
+    ? 'bg-purple-500/20 text-purple-400'
+    : 'bg-amber-500/20 text-amber-400';
+
+  const LayerIcon = isTextLayer ? Type : isImageLayer ? ImageIcon : Layers;
 
   return (
     <div 
@@ -59,10 +68,17 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
         </div>
         
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          {/* Layer Type Icon with Color */}
-          <div className={`p-1.5 rounded-lg ${isTextLayer ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
-            {isTextLayer ? <Type size={13} /> : <ImageIcon size={13} />}
-          </div>
+          {/* Layer Type Icon with thumbnail for image layers */}
+          {isImageLayer && layer.url ? (
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-600 shrink-0 bg-zinc-200 dark:bg-zinc-700">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={layer.url} alt={layer.name} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className={`p-1.5 rounded-lg ${layerIconStyle}`}>
+              <LayerIcon size={13} />
+            </div>
+          )}
           
           {editingLayerId === layer.id ? (
             <input 
