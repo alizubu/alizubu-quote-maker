@@ -138,13 +138,13 @@ const TopBar = () => {
             {/* Left: Logo + Brand */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5 pr-3 border-r border-zinc-300/50 dark:border-white/20">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-900 flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-300 dark:ring-white/10 transition-all duration-500 logo-container">
+                <div className="w-9 h-9 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-300 dark:ring-white/10 transition-all duration-500 hover:scale-110 logo-container">
                   <Image
                     src="/assets/AZ LOGO.png"
                     alt="Alizubu Logo"
                     width={36}
                     height={36}
-                    className="w-full h-full object-contain p-[3px] logo-img transition-all duration-500"
+                    className="w-full h-full object-contain p-[3px] transition-all duration-500 dark:brightness-100 brightness-0 dark:invert-0 invert-0 logo-img"
                     priority
                   />
                 </div>
@@ -220,13 +220,13 @@ const TopBar = () => {
           <div className="sm:hidden flex items-center justify-between gap-2">
             {/* Left: Logo only (compact) */}
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-900 flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-300 dark:ring-white/10 shrink-0 logo-container transition-all duration-500">
+              <div className="w-9 h-9 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-lg overflow-hidden ring-1 ring-zinc-300 dark:ring-white/10 shrink-0 logo-container transition-all duration-500 hover:scale-110">
                 <Image
                   src="/assets/AZ LOGO.png"
                   alt="Alizubu"
                   width={36}
                   height={36}
-                  className="w-full h-full object-contain p-[3px] logo-img transition-all duration-500"
+                  className="w-full h-full object-contain p-[3px] transition-all duration-500 dark:brightness-100 brightness-0 dark:invert-0 invert-0 logo-img"
                   priority
                 />
               </div>

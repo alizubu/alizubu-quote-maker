@@ -325,47 +325,40 @@ html.dark { color-scheme: dark; }
 
 /* ============================================================
  * LOGO THEME-AWARE COLOR + ANIMATION
- * Light mode: logo container is bright white, image is inverted
- *             (red mark becomes dark/muted on bright bg)
- * Dark mode:  logo container stays dark, image shows true colors
- *             (red logo on dark bg — default look)
- * A subtle pulse animation triggers on theme change via the
- * logo-container class transition.
+ * Light mode: white container + dark logo (brightness-0 via Tailwind)
+ * Dark mode: dark container + bright/light logo (normal colors via Tailwind)
+ * Animation plays on each theme switch via the logo-container class.
  * ============================================================ */
 
 @keyframes logoPulse {
-  0%   { transform: scale(1);    opacity: 1; }
-  40%  { transform: scale(1.12); opacity: 0.8; }
-  70%  { transform: scale(0.95); opacity: 0.9; }
-  100% { transform: scale(1);    opacity: 1; }
+  0%   { transform: scale(1);    }
+  40%  { transform: scale(1.15); }
+  70%  { transform: scale(0.93); }
+  100% { transform: scale(1);    }
 }
 
 @keyframes logoGlow {
   0%   { box-shadow: 0 0 0px rgba(239,68,68,0); }
-  50%  { box-shadow: 0 0 16px rgba(239,68,68,0.6); }
+  50%  { box-shadow: 0 0 18px rgba(239,68,68,0.7); }
   100% { box-shadow: 0 0 0px rgba(239,68,68,0); }
 }
 
-/* Dark mode (default): dark container, logo shows true red colors */
-html.dark .logo-container {
-  background-color: rgb(24, 24, 27); /* zinc-900 */
-  animation: logoGlow 1.2s ease-out;
+/* Both modes get the pulse when switching */
+.logo-container {
+  animation: logoGlow 1.5s ease-out;
 }
 
-html.dark .logo-img {
-  filter: none;
-  animation: logoPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+.logo-img {
+  animation: logoPulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Light mode: bright container, logo inverted so it reads well */
+/* Light mode: white bg container */
 html:not(.dark) .logo-container {
   background-color: #ffffff;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-  animation: logoGlow 1.2s ease-out;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
 
-html:not(.dark) .logo-img {
-  /* invert makes the red logo dark; hue-rotate fine-tunes the hue */
-  filter: invert(1) hue-rotate(180deg) brightness(0.85);
-  animation: logoPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Dark mode: dark bg container */
+html.dark .logo-container {
+  background-color: rgb(24, 24, 27);
 }
