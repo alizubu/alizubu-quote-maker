@@ -136,12 +136,10 @@ export default function CanvasArea() {
   useEffect(() => {
     // Run immediately (for text layers which render synchronously)
     attachTransformer();
-    // Also run after short delays so freshly-added image nodes
-    // (which load asynchronously via useImage) are found in the stage
+    // Short delay safety-net for any async renders (image nodes re-trigger
+    // attachTransformer automatically via the layers dep-change after auto-scaling)
     const t1 = setTimeout(attachTransformer, 100);
-    const t2 = setTimeout(attachTransformer, 400);
-    const t3 = setTimeout(attachTransformer, 1000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    return () => clearTimeout(t1);
   }, [attachTransformer]);
 
   // Image load হলে Transformer re-attach করার callback

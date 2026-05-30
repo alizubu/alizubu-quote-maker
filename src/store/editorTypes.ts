@@ -39,6 +39,7 @@ export interface TextLayer extends BaseLayer {
   stroke: string;
   strokeWidth: number;
   strokeType: 'outer' | 'inner';
+  textSharpening?: boolean;
 }
 
 export interface ImageLayer extends BaseLayer {
@@ -46,6 +47,8 @@ export interface ImageLayer extends BaseLayer {
   url: string;
   maskShape?: 'none' | 'circle' | 'square';
   cropArea?: { x: number; y: number; width: number; height: number };
+  naturalWidth?: number;
+  naturalHeight?: number;
 }
 
 export interface GroupLayer extends BaseLayer {

@@ -13,12 +13,11 @@ const SortableLayerItem = ({ layer, editingLayerId, tempLayerName, setTempLayerN
   
   // dnd-kit hooks
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: layer.id });
-  const style = { 
-    transform: CSS.Transform.toString(transform), 
-    transition, 
-    zIndex: isDragging ? 50 : 'auto', 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 'auto',
     opacity: isDragging ? 0.5 : 1,
-    scale: isDragging ? 1.05 : 1,
   };
 
   const isSelected = selectedLayerId === layer.id;
@@ -163,7 +162,7 @@ export default function LayerPanel() {
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState<string>('');
 
-  // 5px ড্র্যাগ করার পর dnd-kit এক্টিভ হবে, যাতে নরমাল ক্লিক কাজ করে
+  // dnd-kit activates after 5px movement so normal clicks still fire
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -171,7 +170,7 @@ export default function LayerPanel() {
     if (over && active.id !== over.id) {
       const oldIndex = layers.findIndex((l) => l.id === active.id);
       const newIndex = layers.findIndex((l) => l.id === over.id);
-      reorderLayers(oldIndex, newIndex); // Zustand স্টোরে পজিশন সেভ হবে
+      reorderLayers(oldIndex, newIndex);
     }
   };
 
@@ -222,7 +221,7 @@ export default function LayerPanel() {
         </div>
         
         {/* Layers List */}
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 custom-scrollbar">
           {layers.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4 py-12">
               <div className="p-4 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl mb-4 border border-zinc-700">

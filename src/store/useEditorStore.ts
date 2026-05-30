@@ -75,6 +75,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
             blendMode: 'source-over',
             visible: true,
             locked: false,
+            naturalWidth: 0,
+            naturalHeight: 0,
           } as ImageLayer,
         ],
         // Auto-select the new image so the Transformer attaches immediately

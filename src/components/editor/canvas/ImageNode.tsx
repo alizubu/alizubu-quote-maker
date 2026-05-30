@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Group, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
+import { useEditorStore } from '../../../store/useEditorStore';
 
 export default function ImageNode({
   layer,
@@ -18,23 +19,42 @@ export default function ImageNode({
   setSnapLines,
   onImageLoaded,
 }: any) {
-  // CRITICAL FIX: blob: URLs created by URL.createObjectURL() MUST NOT
-  // use crossOrigin='anonymous'. Passing it causes a CORS error and the
-  // image silently never loads — making the layer invisible and non-interactive.
+  const { canvasWidth, canvasHeight } = useEditorStore();
+
+  // blob: / data: URLs must NOT use crossOrigin='anonymous' — it causes CORS errors
   const crossOrigin = (layer.url?.startsWith('blob:') || layer.url?.startsWith('data:'))
     ? undefined
     : ('anonymous' as const);
 
   const [img, status] = useImage(layer.url, crossOrigin);
+  const hasInitialized = useRef(false);
 
-  // Image load হলে parent-কে notify করো যাতে Transformer re-attach করতে পারে
   useEffect(() => {
-    if (img && onImageLoaded) {
-      onImageLoaded(layer.id);
-    }
-  }, [img, layer.id, onImageLoaded]);
+    if (!img) return;
 
-  // Effective display dimensions — image load হওয়ার আগে fallback হিসেবে 300x300 দাও
+    // Auto-scale on first load: naturalWidth === 0 is the sentinel set by addImageLayer.
+    // naturalWidth === undefined means an old project file — skip to preserve layout.
+    if (layer.naturalWidth === 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
+      const maxW = canvasWidth * 0.65;
+      const maxH = canvasHeight * 0.65;
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      const scaledW = img.width * scale;
+      const scaledH = img.height * scale;
+      updateLayer(layer.id, {
+        scaleX: scale,
+        scaleY: scale,
+        x: Math.round((canvasWidth - scaledW) / 2),
+        y: Math.round((canvasHeight - scaledH) / 2),
+        naturalWidth: img.width,
+        naturalHeight: img.height,
+      });
+    }
+
+    if (onImageLoaded) onImageLoaded(layer.id);
+  }, [img]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Effective display dimensions — fall back to 300×300 before image loads
   const W = layer.cropArea?.width  ?? img?.width  ?? 300;
   const H = layer.cropArea?.height ?? img?.height ?? 300;
 
@@ -102,12 +122,7 @@ export default function ImageNode({
           crop={layer.cropArea ?? undefined}
         />
       ) : (
-        /*
-         * While the image is loading (or if it failed), render a visible
-         * dashed-border placeholder.  This is CRITICAL: without any child
-         * that has non-zero dimensions, the Konva Group has no hit area —
-         * clicks and drags are ignored and the Transformer cannot attach.
-         */
+        // Placeholder while loading — gives the Group a hit area so the Transformer can attach
         <Rect
           width={300}
           height={300}

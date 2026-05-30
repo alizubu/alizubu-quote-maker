@@ -77,7 +77,7 @@ export default function ControlPanel() {
       </div>
 
       {/* DYNAMIC CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4 custom-scrollbar">
         {activeTab === 'bg' && <BackgroundPanel />}
         {activeTab === 'edit' && renderEditPanel()}
         {activeTab === 'effects' && <EffectsPanel />}

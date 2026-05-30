@@ -21,6 +21,7 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
       align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight} 
       shadowColor={textObj.shadowColor} shadowBlur={textObj.shadowBlur} shadowOffsetX={textObj.shadowOffsetX} shadowOffsetY={textObj.shadowOffsetY} 
       stroke={textObj.stroke} strokeWidth={textObj.strokeWidth} fillAfterStrokeEnabled={textObj.strokeType === 'outer'}
+      perfectDrawEnabled={textObj.textSharpening ? false : undefined}
       draggable={!textObj.locked && !isTypingOverlayOpen && !isSpacePressed}
       onClick={(e) => { 
         e.cancelBubble = true; 

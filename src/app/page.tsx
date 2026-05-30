@@ -65,7 +65,7 @@ export default function EditorPage() {
       {/* ============ CANVAS AREA ============ */}
       <div
         data-canvas-area
-        className="flex-none h-[58dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300"
+        className="flex-none h-[55dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300"
       >
         {/* Animated Background Pattern (lighter on mobile for performance) */}
         <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none">

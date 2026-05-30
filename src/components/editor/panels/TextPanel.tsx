@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
-import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline, Zap } from 'lucide-react';
 
 // --- BackgroundPanel থেকে শেয়ার্ড কম্পোনেন্টগুলো ইম্পোর্ট করা হলো ---
 import { StepperSlider, ColorPickerPopup } from './BackgroundPanel';
@@ -83,6 +83,7 @@ export default function TextPanel() {
             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { isBold: !selectedLayer.isBold }); }} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${selectedLayer.isBold ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}><Bold size={14} /></button>
             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { isItalic: !selectedLayer.isItalic }); }} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${selectedLayer.isItalic ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}><Italic size={14} /></button>
             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { isUnderline: !selectedLayer.isUnderline }); }} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${selectedLayer.isUnderline ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`}><Underline size={14} /></button>
+            <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { textSharpening: !selectedLayer.textSharpening }); }} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${selectedLayer.textSharpening ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'opacity-50 hover:opacity-100'}`} title="Sharp Render — crisp pixel-snapped text (works best without shadow)"><Zap size={14} /></button>
           </div>
         </div>
 
