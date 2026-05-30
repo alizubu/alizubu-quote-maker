@@ -77,7 +77,7 @@ export default function ControlPanel() {
       </div>
 
       {/* DYNAMIC CONTENT AREA */}
-      <div className="flex-1 overflow-y-auto overscroll-contain p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 custom-scrollbar">
         {activeTab === 'bg' && <BackgroundPanel />}
         {activeTab === 'edit' && renderEditPanel()}
         {activeTab === 'effects' && <EffectsPanel />}
@@ -89,18 +89,18 @@ export default function ControlPanel() {
         style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 to-transparent dark:from-black dark:via-black/95 dark:to-transparent backdrop-blur-xl"></div>
-        <div className="relative flex gap-1.5 sm:gap-2 p-2.5 sm:p-3">
+        <div className="relative flex gap-1.5 sm:gap-2 p-2 sm:p-3">
           {[
-            { id: 'bg', icon: <Palette size={18} />, label: 'Background', gradient: 'from-orange-500 to-red-500' },
-            { id: 'edit', icon: <Type size={18} />, label: 'Edit', gradient: 'from-blue-500 to-cyan-500' },
-            { id: 'effects', icon: <Sparkles size={18} />, label: 'Effects', gradient: 'from-purple-500 to-pink-500' }
+            { id: 'bg', icon: <Palette size={17} />, label: 'Background', gradient: 'from-orange-500 to-red-500' },
+            { id: 'edit', icon: <Type size={17} />, label: 'Edit', gradient: 'from-blue-500 to-cyan-500' },
+            { id: 'effects', icon: <Sparkles size={17} />, label: 'Effects', gradient: 'from-purple-500 to-pink-500' }
           ].map((tab) => (
-            <button 
+            <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)} 
-              className={`relative flex-1 min-h-[58px] flex flex-col justify-center items-center gap-1 sm:gap-1.5 py-3 sm:py-3.5 rounded-2xl transition-all duration-300 overflow-hidden group active:scale-95 ${
-                activeTab === tab.id 
-                  ? 'shadow-lg' 
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`relative flex-1 min-h-[52px] sm:min-h-[58px] flex flex-col justify-center items-center gap-1 py-2.5 sm:py-3.5 rounded-2xl transition-all duration-300 overflow-hidden group active:scale-95 ${
+                activeTab === tab.id
+                  ? 'shadow-lg'
                   : 'hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-500 dark:text-zinc-400'
               }`}
             >

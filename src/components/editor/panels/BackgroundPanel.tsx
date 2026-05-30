@@ -16,10 +16,13 @@ export const StepperSlider = ({ label, value, min, max, step = 1, onChange, onAc
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">{label}</label>
-        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/10 px-2 py-1 rounded-md">{typeof value === 'number' ? Number(value.toFixed(1)) : value}{unit}</span>
+        <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-white/10 px-2 py-1 rounded-md min-w-[44px] text-center">{typeof value === 'number' ? Number(value.toFixed(1)) : value}{unit}</span>
       </div>
-      <div className="flex items-center gap-3">
-        <button onClick={handleDecrement} className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-300 transition-colors">-</button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleDecrement}
+          className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 active:bg-zinc-300 dark:active:bg-white/30 text-zinc-600 dark:text-zinc-300 transition-colors shrink-0 text-sm font-bold"
+        >-</button>
         <input
           type="range"
           min={min}
@@ -29,9 +32,13 @@ export const StepperSlider = ({ label, value, min, max, step = 1, onChange, onAc
           onMouseDown={onAction}
           onTouchStart={onAction}
           onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="flex-1 accent-blue-500 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+          className="flex-1 accent-blue-500 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer"
+          style={{ touchAction: 'none' }}
         />
-        <button onClick={handleIncrement} className="w-7 h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-300 transition-colors">+</button>
+        <button
+          onClick={handleIncrement}
+          className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-white/10 hover:bg-zinc-200 dark:hover:bg-white/20 active:bg-zinc-300 dark:active:bg-white/30 text-zinc-600 dark:text-zinc-300 transition-colors shrink-0 text-sm font-bold"
+        >+</button>
       </div>
     </div>
   );
@@ -121,10 +128,10 @@ export default function BackgroundPanel() {
   };
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
+    <div className="space-y-4 sm:space-y-6 animate-in slide-in-from-right-4 duration-300 pb-4">
 
       {/* App Appearance */}
-      <div className="bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-3">
+      <div className="bg-white dark:bg-white/5 p-3 sm:p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-3">
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><Settings2 size={14}/> APP APPEARANCE</h4>
         {mounted ? (
           <div className="flex p-1 bg-zinc-100 dark:bg-black/40 rounded-xl relative">
