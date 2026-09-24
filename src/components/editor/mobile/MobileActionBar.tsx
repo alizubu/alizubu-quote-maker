@@ -27,6 +27,13 @@ export default function MobileActionBar() {
     }
   }, [selectedLayerId]);
 
+  // Force open edit sheet when a layer is tapped (even if already selected)
+  useEffect(() => {
+    const handleLayerTapped = () => setActiveSheet('edit');
+    window.addEventListener('layer-tapped', handleLayerTapped);
+    return () => window.removeEventListener('layer-tapped', handleLayerTapped);
+  }, []);
+
   if (!mounted) return null;
 
   const selectedLayer = layers.find(l => l.id === selectedLayerId);

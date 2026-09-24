@@ -5,7 +5,7 @@ import { Check, Trash2 } from 'lucide-react';
 
 export default function TypingOverlay({ localTextValue, setLocalTextValue, closeTypingOverlay }: any) {
   return (
-    <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200">
       <div className="flex justify-between items-center mb-6">
         <span className="text-white/40 text-xs font-bold uppercase tracking-widest">Editor Keyboard</span>
         <div className="flex gap-3">

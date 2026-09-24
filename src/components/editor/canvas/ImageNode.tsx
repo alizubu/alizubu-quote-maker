@@ -51,6 +51,7 @@ export default function ImageNode({
       setSelectedLayer(null);
     } else {
       setSelectedLayer(layer.id);
+      window.dispatchEvent(new CustomEvent('layer-tapped'));
     }
   };
 

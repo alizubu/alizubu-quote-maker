@@ -31,10 +31,11 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
             setSelectedLayer(null);
           } else {
             setSelectedLayer(textObj.id);
+            window.dispatchEvent(new CustomEvent('layer-tapped'));
           }
         } 
       }} 
-      onTap={(e) => { e.cancelBubble = true; if(!isSpacePressed) setSelectedLayer(textObj.id); }}
+      onTap={(e) => { e.cancelBubble = true; if(!isSpacePressed) { setSelectedLayer(textObj.id); window.dispatchEvent(new CustomEvent('layer-tapped')); } }}
       onDblClick={() => handleDoubleTap(textObj.id, textObj.text)} 
       onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
       onDragMove={handleSnapMove} 
