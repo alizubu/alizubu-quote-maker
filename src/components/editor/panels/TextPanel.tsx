@@ -48,27 +48,25 @@ export default function TextPanel() {
       <div className="space-y-4 bg-white dark:bg-white/5 p-4 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Typography Controls</h4>
         
-        {/* Font Family Selector */}
-        <div className="flex flex-col gap-1.5">
+        {/* Font Family Selector (Mobile Friendly Carousel) */}
+        <div className="flex flex-col gap-2">
           <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Font Style</label>
-          <select 
-            value={selectedLayer.fontFamily || 'sans-serif'} 
-            onChange={(e) => { saveHistory(); updateLayer(selectedLayer.id, { fontFamily: e.target.value }); }} 
-            className="w-full bg-zinc-100 dark:bg-black/40 border border-zinc-200/50 dark:border-white/5 rounded-xl p-2.5 text-xs text-zinc-900 dark:text-white outline-none cursor-pointer appearance-none"
-          >
-            <optgroup label="Standard Fonts">
-              {standardFonts.map(font => (
-                <option key={font} value={font} style={{ fontFamily: font }}>{font}</option>
-              ))}
-            </optgroup>
-            {customFonts.length > 0 && (
-              <optgroup label="My Custom Fonts">
-                {customFonts.map(font => (
-                  <option key={font.name} value={font.name} style={{ fontFamily: font.name }}>{font.name}</option>
-                ))}
-              </optgroup>
-            )}
-          </select>
+          <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x">
+            {[...standardFonts, ...customFonts.map(f => f.name)].map((font) => (
+              <button
+                key={font}
+                onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { fontFamily: font }); }}
+                className={`flex-none px-4 py-2.5 rounded-xl text-[15px] transition-all snap-center border ${
+                  (selectedLayer.fontFamily || 'sans-serif') === font 
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30' 
+                    : 'bg-zinc-100 dark:bg-black/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/5 hover:border-blue-400/50 hover:bg-zinc-200 dark:hover:bg-white/5'
+                }`}
+                style={{ fontFamily: font }}
+              >
+                {font}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2 pt-1">

@@ -9,6 +9,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import ControlPanel from '../components/editor/panels/ControlPanel';
 import TopBar from '../components/editor/topbar/TopBar';
 import LayerPanel from '../components/editor/layers/LayerPanel';
+import MobileActionBar from '../components/editor/mobile/MobileActionBar';
 import { useEditorStore } from '../store/useEditorStore';
 
 // Lazy Load Canvas
@@ -65,7 +66,7 @@ export default function EditorPage() {
       {/* ============ CANVAS AREA ============ */}
       <div
         data-canvas-area
-        className="flex-none h-[58dvh] md:h-full md:flex-1 relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300"
+        className="flex-1 md:h-full relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300 pb-[70px] md:pb-0"
       >
         {/* Animated Background Pattern (lighter on mobile for performance) */}
         <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none">
@@ -81,13 +82,16 @@ export default function EditorPage() {
         <CanvasArea />
       </div>
 
-      {/* ============ CONTROL PANEL ============ */}
+      {/* ============ DESKTOP CONTROL PANEL ============ */}
       <div
         data-control-shell
-        className="flex-1 md:w-[380px] md:flex-none border-t md:border-t-0 md:border-l border-zinc-200 dark:border-zinc-800/50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-[-20px_0_60px_rgba(0,0,0,0.1)] md:dark:shadow-[-20px_0_60px_rgba(0,0,0,0.6)] flex flex-col z-10 min-h-0 overflow-hidden transition-colors duration-300"
+        className="hidden md:flex md:w-[380px] md:flex-none border-l border-zinc-200 dark:border-zinc-800/50 shadow-[-20px_0_60px_rgba(0,0,0,0.1)] dark:shadow-[-20px_0_60px_rgba(0,0,0,0.6)] flex-col z-10 min-h-0 overflow-hidden transition-colors duration-300"
       >
         <ControlPanel />
       </div>
+      
+      {/* ============ MOBILE ACTION BAR ============ */}
+      <MobileActionBar />
 
       {/* ============ EXPORT MODAL (bottom-sheet on mobile) ============ */}
       {isExportModalOpen && (

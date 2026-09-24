@@ -33,24 +33,21 @@ export default function EffectsPanel() {
         <h4 className="text-[10px] font-bold uppercase tracking-wider text-blue-500 flex items-center gap-1.5">
           <Layers size={14} /> Blend Mode
         </h4>
-        <select
-          value={selectedLayer.blendMode}
-          onChange={(e) => { saveHistory(); updateLayer(selectedLayer.id, { blendMode: e.target.value }); }}
-          className="w-full bg-zinc-100 dark:bg-black/40 border border-zinc-200/50 dark:border-white/5 rounded-xl p-2.5 text-xs text-zinc-900 dark:text-white outline-none cursor-pointer appearance-none"
-        >
-          <option value="source-over">Normal</option>
-          <option value="multiply">Multiply</option>
-          <option value="screen">Screen</option>
-          <option value="overlay">Overlay</option>
-          <option value="darken">Darken</option>
-          <option value="lighten">Lighten</option>
-          <option value="color-dodge">Color Dodge</option>
-          <option value="color-burn">Color Burn</option>
-          <option value="hard-light">Hard Light</option>
-          <option value="soft-light">Soft Light</option>
-          <option value="difference">Difference</option>
-          <option value="exclusion">Exclusion</option>
-        </select>
+        <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x mt-2">
+          {['source-over', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion'].map((mode) => (
+            <button
+              key={mode}
+              onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { blendMode: mode }); }}
+              className={`flex-none px-4 py-2 rounded-xl text-xs font-medium capitalize transition-all snap-center border ${
+                (selectedLayer.blendMode || 'source-over') === mode 
+                  ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30' 
+                  : 'bg-zinc-100 dark:bg-black/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/5 hover:border-blue-400/50 hover:bg-zinc-200 dark:hover:bg-white/5'
+              }`}
+            >
+              {mode.replace('-', ' ')}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Shadow & Glow — only for text layers (safe guard) */}
