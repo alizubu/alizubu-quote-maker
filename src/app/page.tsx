@@ -10,6 +10,7 @@ import ControlPanel from '../components/editor/panels/ControlPanel';
 import TopBar from '../components/editor/topbar/TopBar';
 import LayerPanel from '../components/editor/layers/LayerPanel';
 import MobileActionBar from '../components/editor/mobile/MobileActionBar';
+import TypingOverlay from '../components/editor/canvas/TypingOverlay';
 import { useEditorStore } from '../store/useEditorStore';
 
 // Lazy Load Canvas
@@ -181,6 +182,9 @@ export default function EditorPage() {
 
       {/* --- MODULAR LAYER PANEL --- */}
       <LayerPanel />
+
+      {/* --- TYPING OVERLAY (Unconstrained by Canvas bounds) --- */}
+      <TypingOverlay />
     </main>
   );
 }

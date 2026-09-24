@@ -28,14 +28,7 @@ export default function TextPanel() {
       {/* Text Input Block */}
       <div 
         className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 p-4 rounded-2xl flex justify-between items-center cursor-pointer group hover:border-blue-500 transition-colors shadow-sm" 
-        onClick={() => {
-          // FIX #7: Dispatch a custom event so CanvasArea pre-fills localTextValue
-          // before opening the typing overlay. Without this, opening from the panel
-          // always started with empty text and wiped the layer on close.
-          window.dispatchEvent(new CustomEvent('open-typing-overlay', { 
-            detail: { id: selectedLayer.id, text: selectedLayer.text } 
-          }));
-        }}
+        onClick={() => setTypingOverlayOpen(true)}
       >
          <div className="flex-1 min-w-0 pr-4">
            <p className="text-[10px] uppercase font-bold mb-1 text-blue-500">Edit Content</p>

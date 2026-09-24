@@ -1,16 +1,31 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Check, Trash2 } from 'lucide-react';
+import { useEditorStore } from '../../../store/useEditorStore';
 
-export default function TypingOverlay({ localTextValue, setLocalTextValue, closeTypingOverlay }: any) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+export default function TypingOverlay() {
+  const { isTypingOverlayOpen, setTypingOverlayOpen, selectedLayerId, layers, updateLayer } = useEditorStore();
+  const [localTextValue, setLocalTextValue] = useState("");
 
-  if (!mounted) return null;
+  const selectedLayer = layers.find(l => l.id === selectedLayerId);
 
-  return createPortal(
+  useEffect(() => {
+    if (isTypingOverlayOpen && selectedLayer && selectedLayer.type === 'text') {
+      setLocalTextValue(selectedLayer.text || '');
+    }
+  }, [isTypingOverlayOpen, selectedLayer]);
+
+  if (!isTypingOverlayOpen) return null;
+
+  const closeTypingOverlay = () => {
+    if (selectedLayerId) {
+      updateLayer(selectedLayerId, { text: localTextValue });
+    }
+    setTypingOverlayOpen(false);
+  };
+
+  return (
     <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200">
       <div className="flex justify-between items-center mb-6 pt-[env(safe-area-inset-top)]">
         <span className="text-white/40 text-xs font-bold uppercase tracking-widest">Editor Keyboard</span>
@@ -30,7 +45,6 @@ export default function TypingOverlay({ localTextValue, setLocalTextValue, close
         className="flex-1 w-full bg-transparent text-white text-2xl text-center resize-none outline-none font-sans pt-12 placeholder-white/10" 
         placeholder="Type content here..." 
       />
-    </div>,
-    document.body
+    </div>
   );
 }

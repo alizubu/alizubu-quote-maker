@@ -23,7 +23,6 @@ export default function CanvasArea() {
   } = useEditorStore();
   
   const [stageSize, setStageSize] = useState({ width: 360, height: 640 });
-  const [localTextValue, setLocalTextValue] = useState("");
   const [snapLines, setSnapLines] = useState<{v: number | null, h: number | null}>({v: null, h: null});
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isShiftPressed, setIsShiftPressed] = useState(false); 
@@ -154,19 +153,7 @@ export default function CanvasArea() {
     }
   }, [selectedLayerId, multiSelectedIds, attachTransformer]);
 
-  const handleDoubleTap = (id: string, text: string) => { setLocalTextValue(text); setSelectedLayer(id); setTypingOverlayOpen(true); };
-  const closeTypingOverlay = () => { if (selectedLayerId) updateLayer(selectedLayerId, { text: localTextValue } as any); setTypingOverlayOpen(false); };
-
-  // FIX #7: Listen for open-typing-overlay event from TextPanel so it pre-fills existing text
-  useEffect(() => {
-    const handler = (e: any) => {
-      setLocalTextValue(e.detail.text || '');
-      setSelectedLayer(e.detail.id);
-      setTypingOverlayOpen(true);
-    };
-    window.addEventListener('open-typing-overlay', handler);
-    return () => window.removeEventListener('open-typing-overlay', handler);
-  }, [setSelectedLayer, setTypingOverlayOpen]);
+  const handleDoubleTap = (id: string, text: string) => { setSelectedLayer(id); setTypingOverlayOpen(true); };
 
   const handleSnapMove = (e: any) => {
     const node = e.target; const width = node.width() * node.scaleX(); const height = node.height() * node.scaleY();
@@ -238,10 +225,6 @@ export default function CanvasArea() {
           </Layer>
         </Stage>
       </div>
-
-      {isTypingOverlayOpen && (
-        <TypingOverlay localTextValue={localTextValue} setLocalTextValue={setLocalTextValue} closeTypingOverlay={closeTypingOverlay} />
-      )}
     </div>
   );
 }
