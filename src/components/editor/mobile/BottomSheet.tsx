@@ -24,17 +24,13 @@ export default function BottomSheet({ isOpen, onClose, title, children }: Bottom
   if (!render) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:hidden">
-      {/* Backdrop */}
-      <div 
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} 
-        onClick={onClose}
-      />
+    <div className="fixed bottom-[70px] left-0 right-0 z-30 sm:hidden pointer-events-none flex flex-col justify-end overflow-hidden" style={{ top: '10vh' }}>
       
       {/* Sheet */}
       <div 
         onAnimationEnd={handleAnimationEnd}
-        className={`relative w-full bg-white dark:bg-zinc-900 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.8)] border-t border-zinc-200 dark:border-white/10 flex flex-col transform transition-transform duration-300 ease-out max-h-[85vh] ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`relative w-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] border-t border-zinc-200/50 dark:border-white/10 flex flex-col transform transition-transform duration-300 ease-out pointer-events-auto ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
+        style={{ maxHeight: '100%' }}
       >
         {/* Drag Handle & Header */}
         <div className="flex-none flex items-center justify-between px-5 pt-4 pb-3 border-b border-zinc-100 dark:border-white/5">
