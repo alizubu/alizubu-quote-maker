@@ -28,7 +28,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     layers: [
       {
         id: "1", name: "Quote Text", type: "text", text: "Ye Husn Se \nBhare Chehere \nIttrate Bahut Hai",
-        fontSize: 74, fontFamily: "Mont_Blanc_Light", isBold: false, isItalic: false, isUnderline: false,
+        fontSize: 74, fontFamily: "Mont Blanc Light", isBold: false, isItalic: false, isUnderline: false,
         fill: "#FFFFFF", isGradient: false, gradientType: 'linear', gradientColors: ['#f6d365', '#fda085'],
         align: "left", letterSpacing: -2, lineHeight: 1.5,
         shadowColor: "#000000", shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 4,

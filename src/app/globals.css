@@ -235,9 +235,25 @@ body {
 
 /* 2. Custom Fonts */
 @font-face {
-  font-family: 'Mont Blanc Light';
-  src: url('/fonts/MontBlancLight.otf') format('opentype');
+  font-family: 'Mont Blanc';
+  src: url('/fonts/Mont Blanc Regular.ttf') format('truetype');
   font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Mont Blanc Light';
+  src: url('/fonts/Mont Blanc Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Mont Blanc Thin';
+  src: url('/fonts/Mont Blanc Thin.ttf') format('truetype');
+  font-weight: 100;
   font-style: normal;
   font-display: swap;
 }
