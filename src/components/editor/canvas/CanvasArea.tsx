@@ -31,6 +31,8 @@ export default function CanvasArea() {
   const stageRef = useRef<any>(null);
   const bgImageRef = useRef<any>(null);
   const trRef = useRef<any>(null);
+  const lastDist = useRef<number>(0);
+  const lastCenter = useRef<{ x: number, y: number } | null>(null);
 
   const [bgImg] = useImage(bgImage || '', 'anonymous');
 
@@ -62,6 +64,65 @@ export default function CanvasArea() {
     const newScale = e.evt.deltaY < 0 ? oldScale * scaleBy : oldScale / scaleBy;
     setStageScale(newScale);
     setStagePosition({ x: pointer.x - mousePointTo.x * newScale, y: pointer.y - mousePointTo.y * newScale });
+  };
+
+  // Mobile Multi-touch Zoom & Pan
+  const handleTouchMove = (e: any) => {
+    const touch1 = e.evt.touches[0];
+    const touch2 = e.evt.touches[1];
+
+    if (touch1 && touch2) {
+      e.evt.preventDefault();
+      
+      const stage = stageRef.current;
+      const containerBounds = containerRef.current?.getBoundingClientRect();
+      if (!stage || !containerBounds) return;
+      if (stage.isDragging()) { stage.stopDrag(); }
+
+      const p1 = { x: touch1.clientX, y: touch1.clientY };
+      const p2 = { x: touch2.clientX, y: touch2.clientY };
+
+      const center = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const newCenter = { x: center.x - containerBounds.left, y: center.y - containerBounds.top };
+      const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+
+      if (!lastCenter.current || !lastDist.current) {
+        lastCenter.current = newCenter;
+        lastDist.current = dist;
+        return;
+      }
+
+      // Point logical coordinates under the center
+      const pointTo = {
+        x: (newCenter.x - stage.x()) / stage.scaleX(),
+        y: (newCenter.y - stage.y()) / stage.scaleY(),
+      };
+
+      const scaleBy = dist / lastDist.current;
+      const newStageScale = stageScale * scaleBy;
+      
+      const newScaleX = stage.scaleX() * scaleBy;
+      const newScaleY = stage.scaleY() * scaleBy;
+
+      const dx = newCenter.x - lastCenter.current.x;
+      const dy = newCenter.y - lastCenter.current.y;
+
+      const newPos = {
+        x: newCenter.x - pointTo.x * newScaleX + dx,
+        y: newCenter.y - pointTo.y * newScaleY + dy,
+      };
+
+      setStageScale(newStageScale);
+      setStagePosition(newPos);
+
+      lastCenter.current = newCenter;
+      lastDist.current = dist;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastDist.current = 0;
+    lastCenter.current = null;
   };
 
   useEffect(() => {
@@ -186,7 +247,8 @@ export default function CanvasArea() {
       <div className="shadow-[0_0_50px_rgba(0,0,0,0.3)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-zinc-300/50 dark:border-white/10 pointer-events-auto" style={{ borderRadius: canvasWidth === 1080 && canvasHeight === 1080 ? '4px' : '12px' }}>
         <Stage 
           ref={stageRef} width={stageSize.width || 360} height={stageSize.height || 640} 
-          scaleX={finalScale} scaleY={finalScale} x={stagePosition.x} y={stagePosition.y} draggable={isSpacePressed} onWheel={handleWheel}
+          scaleX={finalScale} scaleY={finalScale} x={stagePosition.x} y={stagePosition.y} draggable={isSpacePressed} 
+          onWheel={handleWheel} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
           onDragEnd={(e) => { if(e.target === e.target.getStage()) setStagePosition({ x: e.target.x(), y: e.target.y() }); }}
           onClick={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
           onTap={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
