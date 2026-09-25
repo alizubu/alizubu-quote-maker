@@ -5,7 +5,7 @@ import { Stage, Layer, Rect, Image as KonvaImage, Transformer, Line } from 'reac
 import { useEditorStore } from '../../../store/useEditorStore';
 import useImage from 'use-image';
 import Konva from 'konva';
-import { Maximize } from 'lucide-react';
+import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
 
 // --- ইমপোর্ট করা নতুন মডুলার কম্পোনেন্টগুলো ---
 import ImageNode from './ImageNode';
@@ -123,6 +123,37 @@ export default function CanvasArea() {
   const handleTouchEnd = () => {
     lastDist.current = 0;
     lastCenter.current = null;
+  };
+
+  const zoomCanvas = (direction: 'in' | 'out') => {
+    const scaleBy = 1.2;
+    const oldScale = stageScale;
+    const newScale = direction === 'in' ? oldScale * scaleBy : oldScale / scaleBy;
+    
+    const stage = stageRef.current;
+    if (!stage) {
+      setStageScale(newScale);
+      return;
+    }
+    
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2,
+    };
+    
+    const pointTo = {
+      x: (center.x - stage.x()) / stage.scaleX(),
+      y: (center.y - stage.y()) / stage.scaleY(),
+    };
+    
+    const newScaleX = stage.scaleX() * (newScale / oldScale);
+    const newScaleY = stage.scaleY() * (newScale / oldScale);
+
+    setStageScale(newScale);
+    setStagePosition({
+      x: center.x - pointTo.x * newScaleX,
+      y: center.y - pointTo.y * newScaleY,
+    });
   };
 
   useEffect(() => {
@@ -243,6 +274,15 @@ export default function CanvasArea() {
            <Maximize size={16} />
         </button>
       )}
+
+      <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
+        <button onClick={() => zoomCanvas('in')} className="p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Zoom In">
+          <ZoomIn size={16} />
+        </button>
+        <button onClick={() => zoomCanvas('out')} className="p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Zoom Out">
+          <ZoomOut size={16} />
+        </button>
+      </div>
 
       <div className="shadow-[0_0_50px_rgba(0,0,0,0.3)] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative border border-zinc-300/50 dark:border-white/10 pointer-events-auto" style={{ borderRadius: canvasWidth === 1080 && canvasHeight === 1080 ? '4px' : '12px' }}>
         <Stage 
