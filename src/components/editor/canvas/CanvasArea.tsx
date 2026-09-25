@@ -216,38 +216,59 @@ export default function CanvasArea() {
     const handleDownload = (e: any) => {
       const targetWidth = e.detail?.targetWidth || canvasWidth;
       const group = artboardRef.current;
-      if (stageRef.current && group) {
+      const stage = stageRef.current;
+      if (stage && group) {
         setSelectedLayer(null);
         setMultiSelectedIds([]);
         setTimeout(() => {
-          // Save current transform
+          // Save current state
           const oldSX = group.scaleX();
           const oldSY = group.scaleY();
-          const oldX = group.x();
-          const oldY = group.y();
+          const oldGX = group.x();
+          const oldGY = group.y();
+          const oldStageW = stage.width();
+          const oldStageH = stage.height();
           
-          // Reset to 1:1 for clean export
+          // Temporarily resize Stage to fit the full canvas and reset Group
+          stage.width(canvasWidth);
+          stage.height(canvasHeight);
           group.scaleX(1);
           group.scaleY(1);
           group.x(0);
           group.y(0);
 
+          // Uncache the background image for sharp export
+          if (bgImageRef.current) {
+            bgImageRef.current.clearCache();
+          }
+
+          // Force a full re-render at the new dimensions
+          stage.batchDraw();
+
           const pixelRatio = targetWidth / canvasWidth;
           const link = document.createElement('a');
           link.download = `Alizubu_${targetWidth}px.png`;
-          link.href = stageRef.current.toDataURL({ 
+          link.href = stage.toDataURL({ 
             pixelRatio, 
             mimeType: 'image/png',
             x: 0, y: 0, width: canvasWidth, height: canvasHeight
           });
           link.click();
 
-          // Restore
+          // Restore everything
+          stage.width(oldStageW);
+          stage.height(oldStageH);
           group.scaleX(oldSX);
           group.scaleY(oldSY);
-          group.x(oldX);
-          group.y(oldY);
-        }, 150);
+          group.x(oldGX);
+          group.y(oldGY);
+
+          // Re-cache background image for display performance
+          if (bgImageRef.current) {
+            bgImageRef.current.cache();
+          }
+          stage.batchDraw();
+        }, 200);
       }
     };
     window.addEventListener('trigger-safe-download', handleDownload);

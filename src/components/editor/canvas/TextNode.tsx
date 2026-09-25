@@ -40,7 +40,24 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
       onDblTap={() => handleDoubleTap(textObj.id, textObj.text)}
       onDragMove={handleSnapMove} 
       onDragEnd={(e) => { setSnapLines({ v: null, h: null }); updateLayer(textObj.id, { x: e.target.x(), y: e.target.y() }); }} 
-      onTransformEnd={(e) => { const node = e.target; updateLayer(textObj.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() }); }}
+      onTransformEnd={(e) => { 
+        const node = e.target; 
+        const newScaleX = node.scaleX();
+        const newScaleY = node.scaleY();
+        // Convert scale into fontSize to keep text as sharp vector glyphs (not blurry bitmap)
+        const newFontSize = Math.max(1, Math.round(textObj.fontSize * newScaleY));
+        const newWidth = node.width() * newScaleX;
+        node.scaleX(1);
+        node.scaleY(1);
+        node.width(newWidth);
+        updateLayer(textObj.id, { 
+          x: node.x(), y: node.y(), 
+          fontSize: newFontSize,
+          scaleX: 1, scaleY: 1, 
+          rotation: node.rotation(),
+          width: newWidth,
+        }); 
+      }}
     />
   );
 }
