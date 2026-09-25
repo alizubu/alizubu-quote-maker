@@ -284,12 +284,12 @@ export default function CanvasArea() {
         </button>
       )}
 
-      <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
-        <button onClick={() => zoomCanvas('in')} className="p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Zoom In">
-          <ZoomIn size={16} />
+      <div className="absolute bottom-6 right-6 z-10 flex flex-row gap-3">
+        <button onClick={() => zoomCanvas('out')} className="p-3 bg-zinc-800/80 hover:bg-zinc-700/80 dark:bg-black/50 dark:hover:bg-zinc-800/80 border border-zinc-200/20 dark:border-white/10 rounded-full text-white backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.3)] transition-all active:scale-90" title="Zoom Out">
+          <ZoomOut size={20} />
         </button>
-        <button onClick={() => zoomCanvas('out')} className="p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Zoom Out">
-          <ZoomOut size={16} />
+        <button onClick={() => zoomCanvas('in')} className="p-3 bg-zinc-800/80 hover:bg-zinc-700/80 dark:bg-black/50 dark:hover:bg-zinc-800/80 border border-zinc-200/20 dark:border-white/10 rounded-full text-white backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.3)] transition-all active:scale-90" title="Zoom In">
+          <ZoomIn size={20} />
         </button>
       </div>
 
