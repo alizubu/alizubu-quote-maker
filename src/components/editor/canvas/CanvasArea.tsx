@@ -7,7 +7,7 @@ import useImage from 'use-image';
 import Konva from 'konva';
 import { Maximize, ZoomIn, ZoomOut } from 'lucide-react';
 
-// --- ইমপোর্ট করা নতুন মডুলার কম্পোনেন্টগুলো ---
+// --- Modular Components ---
 import ImageNode from './ImageNode';
 import TextNode from './TextNode';
 import TypingOverlay from './TypingOverlay';
@@ -31,8 +31,11 @@ export default function CanvasArea() {
   const stageRef = useRef<any>(null);
   const bgImageRef = useRef<any>(null);
   const trRef = useRef<any>(null);
+  const artboardRef = useRef<any>(null);
   const lastDist = useRef<number>(0);
   const lastCenter = useRef<{ x: number, y: number } | null>(null);
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
 
   const [bgImg] = useImage(bgImage || '', 'anonymous');
 
@@ -53,42 +56,49 @@ export default function CanvasArea() {
     return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
   }, [isTypingOverlayOpen]);
 
-  const baseScale = Math.min((stageSize.width * 0.95) / canvasWidth, (stageSize.height * 0.95) / canvasHeight) || 1;
+  // --- Computed Display Values ---
+  // Stage stays at 1:1 (no transforms). The artboard Group handles all zoom/pan.
+  const baseScale = Math.min((stageSize.width * 0.90) / canvasWidth, (stageSize.height * 0.90) / canvasHeight) || 1;
   const finalScale = baseScale * stageScale;
-  const centerX = (stageSize.width - canvasWidth * finalScale) / 2;
-  const centerY = (stageSize.height - canvasHeight * finalScale) / 2;
-  const stageX = centerX + stagePosition.x;
-  const stageY = centerY + stagePosition.y;
+  const groupX = (stageSize.width - canvasWidth * finalScale) / 2 + stagePosition.x;
+  const groupY = (stageSize.height - canvasHeight * finalScale) / 2 + stagePosition.y;
 
-  // Mouse Wheel Zoom
+  // Helper: read fresh state for rapid event handlers
+  const getTransform = useCallback(() => {
+    const s = useEditorStore.getState();
+    const fs = baseScale * s.stageScale;
+    return {
+      stageScale: s.stageScale,
+      finalScale: fs,
+      groupX: (stageSize.width - canvasWidth * fs) / 2 + s.stagePosition.x,
+      groupY: (stageSize.height - canvasHeight * fs) / 2 + s.stagePosition.y,
+    };
+  }, [baseScale, stageSize.width, stageSize.height, canvasWidth, canvasHeight]);
+
+  // --- Mouse Wheel Zoom ---
   const handleWheel = (e: any) => {
     e.evt.preventDefault();
     const scaleBy = 1.1;
-    const stage = e.target.getStage();
-    const oldStageScale = stageScale;
-    const pointer = stage.getPointerPosition();
+    const pointer = e.target.getStage().getPointerPosition();
+    const t = getTransform();
     
     const mousePointTo = { 
-      x: (pointer.x - stage.x()) / stage.scaleX(), 
-      y: (pointer.y - stage.y()) / stage.scaleY() 
+      x: (pointer.x - t.groupX) / t.finalScale, 
+      y: (pointer.y - t.groupY) / t.finalScale 
     };
     
-    const newStageScale = e.evt.deltaY < 0 ? oldStageScale * scaleBy : oldStageScale / scaleBy;
-    const newFinalScale = baseScale * newStageScale;
+    const newSS = e.evt.deltaY < 0 ? t.stageScale * scaleBy : t.stageScale / scaleBy;
+    const newFS = baseScale * newSS;
+    const newGX = pointer.x - mousePointTo.x * newFS;
+    const newGY = pointer.y - mousePointTo.y * newFS;
+    const cx = (stageSize.width - canvasWidth * newFS) / 2;
+    const cy = (stageSize.height - canvasHeight * newFS) / 2;
     
-    const newPos = {
-      x: pointer.x - mousePointTo.x * newFinalScale,
-      y: pointer.y - mousePointTo.y * newFinalScale
-    };
-    
-    const newCenterX = (stageSize.width - canvasWidth * newFinalScale) / 2;
-    const newCenterY = (stageSize.height - canvasHeight * newFinalScale) / 2;
-    
-    setStageScale(newStageScale);
-    setStagePosition({ x: newPos.x - newCenterX, y: newPos.y - newCenterY });
+    setStageScale(newSS);
+    setStagePosition({ x: newGX - cx, y: newGY - cy });
   };
 
-  // Mobile Multi-touch Zoom & Pan
+  // --- Mobile Multi-touch Zoom & Pan ---
   const handleTouchMove = (e: any) => {
     const touch1 = e.evt.touches[0];
     const touch2 = e.evt.touches[1];
@@ -101,11 +111,10 @@ export default function CanvasArea() {
       if (!stage || !containerBounds) return;
       if (stage.isDragging()) { stage.stopDrag(); }
 
-      const p1 = { x: touch1.clientX, y: touch1.clientY };
-      const p2 = { x: touch2.clientX, y: touch2.clientY };
+      const p1 = { x: touch1.clientX - containerBounds.left, y: touch1.clientY - containerBounds.top };
+      const p2 = { x: touch2.clientX - containerBounds.left, y: touch2.clientY - containerBounds.top };
 
-      const centerPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      const newCenter = { x: centerPoint.x - containerBounds.left, y: centerPoint.y - containerBounds.top };
+      const newCenter = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
       const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 
       if (!lastCenter.current || !lastDist.current) {
@@ -114,28 +123,27 @@ export default function CanvasArea() {
         return;
       }
 
+      const t = getTransform();
+
       const pointTo = {
-        x: (newCenter.x - stage.x()) / stage.scaleX(),
-        y: (newCenter.y - stage.y()) / stage.scaleY(),
+        x: (newCenter.x - t.groupX) / t.finalScale,
+        y: (newCenter.y - t.groupY) / t.finalScale,
       };
 
       const scaleBy = dist / lastDist.current;
-      const newStageScale = stageScale * scaleBy;
-      const newFinalScale = baseScale * newStageScale;
+      const newSS = t.stageScale * scaleBy;
+      const newFS = baseScale * newSS;
 
       const dx = newCenter.x - lastCenter.current.x;
       const dy = newCenter.y - lastCenter.current.y;
 
-      const newPos = {
-        x: newCenter.x - pointTo.x * newFinalScale + dx,
-        y: newCenter.y - pointTo.y * newFinalScale + dy,
-      };
+      const newGX = newCenter.x - pointTo.x * newFS + dx;
+      const newGY = newCenter.y - pointTo.y * newFS + dy;
+      const cx = (stageSize.width - canvasWidth * newFS) / 2;
+      const cy = (stageSize.height - canvasHeight * newFS) / 2;
 
-      const newCenterX = (stageSize.width - canvasWidth * newFinalScale) / 2;
-      const newCenterY = (stageSize.height - canvasHeight * newFinalScale) / 2;
-
-      setStageScale(newStageScale);
-      setStagePosition({ x: newPos.x - newCenterX, y: newPos.y - newCenterY });
+      setStageScale(newSS);
+      setStagePosition({ x: newGX - cx, y: newGY - cy });
 
       lastCenter.current = newCenter;
       lastDist.current = dist;
@@ -147,37 +155,51 @@ export default function CanvasArea() {
     lastCenter.current = null;
   };
 
-  const zoomCanvas = (direction: 'in' | 'out') => {
-    const scaleBy = 1.2;
-    const oldStageScale = stageScale;
-    const newStageScale = direction === 'in' ? oldStageScale * scaleBy : oldStageScale / scaleBy;
-    const newFinalScale = baseScale * newStageScale;
-    
-    const stage = stageRef.current;
-    if (!stage) {
-      setStageScale(newStageScale);
-      return;
-    }
-    
-    const centerPoint = { x: stage.width() / 2, y: stage.height() / 2 };
-    
-    const pointTo = {
-      x: (centerPoint.x - stage.x()) / stage.scaleX(),
-      y: (centerPoint.y - stage.y()) / stage.scaleY(),
-    };
-    
-    const newPos = {
-      x: centerPoint.x - pointTo.x * newFinalScale,
-      y: centerPoint.y - pointTo.y * newFinalScale,
-    };
-    
-    const newCenterX = (stageSize.width - canvasWidth * newFinalScale) / 2;
-    const newCenterY = (stageSize.height - canvasHeight * newFinalScale) / 2;
-
-    setStageScale(newStageScale);
-    setStagePosition({ x: newPos.x - newCenterX, y: newPos.y - newCenterY });
+  // --- Spacebar Pan (Manual mouse drag) ---
+  const handleMouseDown = (e: any) => {
+    if (!isSpacePressed) return;
+    isPanningRef.current = true;
+    const pointer = e.target.getStage().getPointerPosition();
+    const sp = useEditorStore.getState().stagePosition;
+    panStartRef.current = { x: pointer.x - sp.x, y: pointer.y - sp.y };
   };
 
+  const handleMouseMove = (e: any) => {
+    if (!isPanningRef.current) return;
+    const pointer = e.target.getStage().getPointerPosition();
+    setStagePosition({
+      x: pointer.x - panStartRef.current.x,
+      y: pointer.y - panStartRef.current.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    isPanningRef.current = false;
+  };
+
+  // --- Zoom Buttons ---
+  const zoomCanvas = (direction: 'in' | 'out') => {
+    const scaleBy = 1.25;
+    const t = getTransform();
+    const newSS = direction === 'in' ? t.stageScale * scaleBy : t.stageScale / scaleBy;
+    const newFS = baseScale * newSS;
+    
+    const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
+    const pointTo = {
+      x: (center.x - t.groupX) / t.finalScale,
+      y: (center.y - t.groupY) / t.finalScale,
+    };
+    
+    const newGX = center.x - pointTo.x * newFS;
+    const newGY = center.y - pointTo.y * newFS;
+    const cx = (stageSize.width - canvasWidth * newFS) / 2;
+    const cy = (stageSize.height - canvasHeight * newFS) / 2;
+
+    setStageScale(newSS);
+    setStagePosition({ x: newGX - cx, y: newGY - cy });
+  };
+
+  // --- Container Resize ---
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -189,28 +211,30 @@ export default function CanvasArea() {
     return () => window.removeEventListener('resize', updateSize);
   }, []); 
 
-  // Export Engine — pixelRatio must be based on canvas logical size only, not display scale
+  // --- Export Engine ---
   useEffect(() => {
     const handleDownload = (e: any) => {
-      const targetWidth = e.detail?.targetWidth || canvasWidth; 
-      if (stageRef.current) {
+      const targetWidth = e.detail?.targetWidth || canvasWidth;
+      const group = artboardRef.current;
+      if (stageRef.current && group) {
         setSelectedLayer(null);
         setMultiSelectedIds([]);
         setTimeout(() => {
-          // Temporarily set scale and position to export perfectly
-          const oldScale = stageRef.current.scaleX();
-          const oldX = stageRef.current.x();
-          const oldY = stageRef.current.y();
+          // Save current transform
+          const oldSX = group.scaleX();
+          const oldSY = group.scaleY();
+          const oldX = group.x();
+          const oldY = group.y();
           
-          stageRef.current.scaleX(1);
-          stageRef.current.scaleY(1);
-          stageRef.current.x(0);
-          stageRef.current.y(0);
+          // Reset to 1:1 for clean export
+          group.scaleX(1);
+          group.scaleY(1);
+          group.x(0);
+          group.y(0);
 
           const pixelRatio = targetWidth / canvasWidth;
           const link = document.createElement('a');
           link.download = `Alizubu_${targetWidth}px.png`;
-          // clip rect for export matches canvas bounds
           link.href = stageRef.current.toDataURL({ 
             pixelRatio, 
             mimeType: 'image/png',
@@ -219,10 +243,10 @@ export default function CanvasArea() {
           link.click();
 
           // Restore
-          stageRef.current.scaleX(oldScale);
-          stageRef.current.scaleY(oldScale);
-          stageRef.current.x(oldX);
-          stageRef.current.y(oldY);
+          group.scaleX(oldSX);
+          group.scaleY(oldSY);
+          group.x(oldX);
+          group.y(oldY);
         }, 150);
       }
     };
@@ -274,6 +298,16 @@ export default function CanvasArea() {
 
   const activeIdsForTr = multiSelectedIds.length > 0 ? multiSelectedIds : (selectedLayerId ? [selectedLayerId] : []);
 
+  // Click/Tap on empty workspace = deselect
+  const handleDeselect = (e: any) => {
+    if (isSpacePressed) return;
+    const target = e.target;
+    if (target === target.getStage() || target.name() === 'bg' || target.name() === 'workspace-bg') {
+      setSelectedLayer(null);
+      setMultiSelectedIds([]);
+    }
+  };
+
   return (
     <div ref={containerRef} className={`w-full h-full flex items-center justify-center bg-zinc-100 dark:bg-[#09090b] overflow-hidden relative transition-colors duration-300 ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}>
       <style dangerouslySetInnerHTML={{ __html: customFonts.map(f => `@font-face { font-family: '${f.name}'; src: url('${f.url}'); }`).join('\n') }} />
@@ -295,51 +329,61 @@ export default function CanvasArea() {
 
       <div className="w-full h-full overflow-hidden relative pointer-events-auto">
         <Stage 
-          ref={stageRef} width={stageSize.width || 360} height={stageSize.height || 640} 
-          scaleX={finalScale} scaleY={finalScale} x={stageX} y={stageY} draggable={isSpacePressed} 
-          onWheel={handleWheel} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-          onDragEnd={(e) => { 
-            if(e.target === e.target.getStage()) {
-              setStagePosition({ x: e.target.x() - centerX, y: e.target.y() - centerY });
-            } 
-          }}
-          onClick={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
-          onTap={(e) => { if(!isSpacePressed && (e.target === e.target.getStage() || e.target.name() === 'bg')) { setSelectedLayer(null); setMultiSelectedIds([]); } }}
+          ref={stageRef} 
+          width={stageSize.width || 360} 
+          height={stageSize.height || 640}
+          onWheel={handleWheel} 
+          onTouchMove={handleTouchMove} 
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onClick={handleDeselect}
+          onTap={handleDeselect}
         >
           <Layer>
-            {/* The outer part (Artboard Base) that scales visually but acts as the boundary */}
-            <Rect 
-              x={0} y={0} width={canvasWidth} height={canvasHeight} fill={bgColor} name="bg" 
-              shadowColor="black" shadowBlur={30 / finalScale} shadowOpacity={0.15} 
-              stroke="rgba(0,0,0,0.05)" strokeWidth={1 / finalScale}
-              cornerRadius={canvasWidth === 1080 && canvasHeight === 1080 ? 4 : 12}
-            />
-            
-            {/* The clipped internal canvas contents */}
-            <Group clipX={0} clipY={0} clipWidth={canvasWidth} clipHeight={canvasHeight}>
-              {bgImg && <KonvaImage ref={bgImageRef} image={bgImg} name="bg" {...bgProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />}
-              
-              {layers.map((layer) => {
-                if (!layer.visible) return null;
-                if (layer.type === 'image') return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} setSnapLines={setSnapLines} onImageLoaded={handleImageLoaded} />;
-                if (layer.type === 'text') return <TextNode key={layer.id} textObj={layer} isTypingOverlayOpen={isTypingOverlayOpen} selectedLayerId={selectedLayerId} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} multiSelectedIds={multiSelectedIds} setMultiSelectedIds={setMultiSelectedIds} setSelectedLayer={setSelectedLayer} handleDoubleTap={handleDoubleTap} handleSnapMove={handleSnapMove} setSnapLines={setSnapLines} updateLayer={updateLayer} />;
-                return null;
-              })}
-            </Group>
-            
-            {snapLines.v !== null && <Line points={[snapLines.v, 0, snapLines.v, canvasHeight]} stroke="#ec4899" strokeWidth={2 / finalScale} dash={[15 / finalScale, 10 / finalScale]} />}
-            {snapLines.h !== null && <Line points={[0, snapLines.h, canvasWidth, snapLines.h]} stroke="#ec4899" strokeWidth={2 / finalScale} dash={[15 / finalScale, 10 / finalScale]} />}
-            
-            {activeIdsForTr.length > 0 && !isTypingOverlayOpen && !isSpacePressed && (
-              <Transformer 
-                ref={trRef} 
-                enabledAnchors={isCropMode && activeIdsForTr.length === 1 ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : ['top-left', 'top-center', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-center', 'bottom-right']} 
-                boundBoxFunc={(oldBox, newBox) => newBox.width < 10 || newBox.height < 10 ? oldBox : newBox} 
-                borderStroke={isCropMode ? "#10b981" : "#3b82f6"} 
-                anchorStroke={isCropMode ? "#10b981" : "#3b82f6"} 
-                anchorFill="#ffffff" anchorSize={12 / finalScale} cornerRadius={5} 
+            {/* Artboard Group: carries ALL zoom/pan transforms */}
+            <Group
+              ref={artboardRef}
+              x={groupX}
+              y={groupY}
+              scaleX={finalScale}
+              scaleY={finalScale}
+            >
+              {/* Artboard base — shadow renders freely because Stage is unscaled */}
+              <Rect 
+                x={0} y={0} width={canvasWidth} height={canvasHeight} fill={bgColor} name="bg" 
+                shadowColor="black" shadowBlur={25} shadowOpacity={0.2} shadowOffsetY={4}
+                stroke="rgba(0,0,0,0.08)" strokeWidth={1}
+                cornerRadius={canvasWidth === 1080 && canvasHeight === 1080 ? 4 : 12}
               />
-            )}
+              
+              {/* Clipped internal canvas contents */}
+              <Group clipX={0} clipY={0} clipWidth={canvasWidth} clipHeight={canvasHeight}>
+                {bgImg && <KonvaImage ref={bgImageRef} image={bgImg} name="bg" {...bgProps} filters={[Konva.Filters.Blur, Konva.Filters.Brighten]} blurRadius={bgBlur} brightness={bgBrightness / 100} />}
+                
+                {layers.map((layer) => {
+                  if (!layer.visible) return null;
+                  if (layer.type === 'image') return <ImageNode key={layer.id} layer={layer} isTypingOverlayOpen={isTypingOverlayOpen} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} isCropMode={isCropMode} multiSelectedIds={multiSelectedIds} setSelectedLayer={setSelectedLayer} setMultiSelectedIds={setMultiSelectedIds} updateLayer={updateLayer} handleSnap={handleSnapMove} setSnapLines={setSnapLines} onImageLoaded={handleImageLoaded} />;
+                  if (layer.type === 'text') return <TextNode key={layer.id} textObj={layer} isTypingOverlayOpen={isTypingOverlayOpen} selectedLayerId={selectedLayerId} isSpacePressed={isSpacePressed} isShiftPressed={isShiftPressed} multiSelectedIds={multiSelectedIds} setMultiSelectedIds={setMultiSelectedIds} setSelectedLayer={setSelectedLayer} handleDoubleTap={handleDoubleTap} handleSnapMove={handleSnapMove} setSnapLines={setSnapLines} updateLayer={updateLayer} />;
+                  return null;
+                })}
+              </Group>
+              
+              {snapLines.v !== null && <Line points={[snapLines.v, 0, snapLines.v, canvasHeight]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
+              {snapLines.h !== null && <Line points={[0, snapLines.h, canvasWidth, snapLines.h]} stroke="#ec4899" strokeWidth={2} dash={[15, 10]} />}
+              
+              {activeIdsForTr.length > 0 && !isTypingOverlayOpen && !isSpacePressed && (
+                <Transformer 
+                  ref={trRef} 
+                  enabledAnchors={isCropMode && activeIdsForTr.length === 1 ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : ['top-left', 'top-center', 'top-right', 'middle-left', 'middle-right', 'bottom-left', 'bottom-center', 'bottom-right']} 
+                  boundBoxFunc={(oldBox, newBox) => newBox.width < 10 || newBox.height < 10 ? oldBox : newBox} 
+                  borderStroke={isCropMode ? "#10b981" : "#3b82f6"} 
+                  anchorStroke={isCropMode ? "#10b981" : "#3b82f6"} 
+                  anchorFill="#ffffff" anchorSize={12} cornerRadius={5} 
+                />
+              )}
+            </Group>
           </Layer>
         </Stage>
       </div>
