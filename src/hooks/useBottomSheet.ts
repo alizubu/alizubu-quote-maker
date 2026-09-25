@@ -7,11 +7,12 @@ export function useBottomSheet() {
   const [panelHeight, setPanelHeight] = useState(0);
 
   // Snap points defined in vh (viewport height) percentages
+  // Adjusted to be more compact like PixelLab, prioritizing canvas space
   const snapPoints = {
     closed: 0,
-    collapsed: 35,
-    medium: 50,
-    expanded: 75,
+    collapsed: 30,
+    medium: 45,
+    expanded: 60,
   };
 
   const openSheet = useCallback((state: BottomSheetState = 'collapsed') => {
