@@ -124,6 +124,24 @@ export default function TextPanel() {
          </div>
       </AccordionSection>
 
+      <AccordionSection title="Shadow">
+        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
+          <p className="text-xs">Shadow controls coming soon</p>
+        </div>
+      </AccordionSection>
+
+      <AccordionSection title="Effects">
+        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
+          <p className="text-xs">Effects coming soon</p>
+        </div>
+      </AccordionSection>
+
+      <AccordionSection title="Transform">
+        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
+          <p className="text-xs">Transform controls coming soon</p>
+        </div>
+      </AccordionSection>
+
     </div>
   );
 }

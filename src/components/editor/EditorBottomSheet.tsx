@@ -49,10 +49,10 @@ const EditorBottomSheet = memo(function EditorBottomSheet({
   };
 
   const variants: Variants = {
-    closed: { y: '100%', transition: { type: 'spring', bounce: 0, duration: 0.4 } },
-    collapsed: { y: `${snapPoints.expanded - snapPoints.collapsed}dvh`, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
-    medium: { y: `${snapPoints.expanded - snapPoints.medium}dvh`, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
-    expanded: { y: '0%', transition: { type: 'spring', bounce: 0.2, duration: 0.5 } }
+    closed: { height: 0, y: '100%', transition: { type: 'spring', bounce: 0, duration: 0.4 } },
+    collapsed: { height: `${snapPoints.collapsed}dvh`, y: 0, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
+    medium: { height: `${snapPoints.medium}dvh`, y: 0, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
+    expanded: { height: `${snapPoints.expanded}dvh`, y: 0, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } }
   };
 
   return (
@@ -67,13 +67,13 @@ const EditorBottomSheet = memo(function EditorBottomSheet({
         animate={isOpen ? currentState : 'closed'}
         initial="closed"
         variants={variants}
-        className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex flex-col bg-white dark:bg-zinc-900 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] border-t border-zinc-200 dark:border-white/10 touch-none will-change-transform rounded-t-[32px]"
-        style={{ height: `${snapPoints.expanded}dvh`, paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden flex flex-col bg-white dark:bg-zinc-900 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] border-t border-zinc-200 dark:border-white/10 will-change-[height,transform] rounded-t-[32px] overflow-visible after:content-[''] after:absolute after:top-[100%] after:left-0 after:right-0 after:h-[100dvh] after:bg-white dark:after:bg-zinc-900 after:-z-10"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {/* Drag Handle & Header */}
         <div 
           onPointerDown={(e) => dragControls.start(e)}
-          className="flex-none flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-white/5 rounded-t-[32px] cursor-grab active:cursor-grabbing touch-none"
+          className="relative z-10 flex-none flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-white/5 rounded-t-[32px] cursor-grab active:cursor-grabbing touch-none bg-white dark:bg-zinc-900"
         >
           <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
           <h3 className="font-bold text-zinc-900 dark:text-white text-lg mt-1 tracking-tight">{title}</h3>
@@ -87,7 +87,7 @@ const EditorBottomSheet = memo(function EditorBottomSheet({
         
         
         {/* Panel Content Scrolls */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-white dark:bg-zinc-900 pointer-events-auto">
+        <div className="relative z-10 flex-1 overflow-y-auto custom-scrollbar px-6 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-white dark:bg-zinc-900 pointer-events-auto">
           {children}
         </div>
       </motion.div>
