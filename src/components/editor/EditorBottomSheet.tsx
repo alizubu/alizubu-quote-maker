@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { motion, PanInfo } from 'framer-motion';
+import { motion, PanInfo, Variants } from 'framer-motion';
 import { X } from 'lucide-react';
 import { BottomSheetState } from '../../hooks/useBottomSheet';
 
@@ -47,7 +47,7 @@ const EditorBottomSheet = memo(function EditorBottomSheet({
     }
   };
 
-  const variants = {
+  const variants: Variants = {
     closed: { y: '100%', transition: { type: 'spring', bounce: 0, duration: 0.4 } },
     collapsed: { y: `${100 - snapPoints.collapsed}dvh`, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
     medium: { y: `${100 - snapPoints.medium}dvh`, transition: { type: 'spring', bounce: 0.2, duration: 0.5 } },
