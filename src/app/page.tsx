@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { X, Sparkles, ShieldCheck } from 'lucide-react';
 import { useHotkeys } from 'react-hotkeys-hook';
@@ -12,6 +12,17 @@ import LayerPanel from '../components/editor/layers/LayerPanel';
 import MobileActionBar from '../components/editor/mobile/MobileActionBar';
 import TypingOverlay from '../components/editor/canvas/TypingOverlay';
 import { useEditorStore } from '../store/useEditorStore';
+
+// New Mobile Architecture
+import { useBottomSheet } from '../hooks/useBottomSheet';
+import { useEnsureVisible } from '../hooks/useEnsureVisible';
+import { calculateViewportScale } from '../utils/canvasViewport';
+import CanvasViewport from '../components/editor/CanvasViewport';
+import EditorBottomSheet from '../components/editor/EditorBottomSheet';
+import BackgroundPanel from '../components/editor/panels/BackgroundPanel';
+import TextPanel from '../components/editor/panels/TextPanel';
+import ImagePanel from '../components/editor/panels/ImagePanel';
+import EffectsPanel from '../components/editor/panels/EffectsPanel';
 
 // Lazy Load Canvas
 const CanvasArea = dynamic(() => import('../components/editor/canvas/CanvasArea'), {
@@ -27,6 +38,7 @@ const CanvasArea = dynamic(() => import('../components/editor/canvas/CanvasArea'
 export default function EditorPage() {
   const {
     selectedLayerId,
+    layers,
     deleteLayer,
     duplicateLayer,
     isExportModalOpen,
@@ -35,6 +47,93 @@ export default function EditorPage() {
     redo,
   } = useEditorStore();
   const [selectedQuality, setSelectedQuality] = useState<number>(1080);
+  
+  // Mobile Editor Architecture State
+  const { sheetState, setSheetState, panelHeight, openSheet, closeSheet, snapPoints } = useBottomSheet();
+  const { panOffset, ensureVisible } = useEnsureVisible();
+  const [activeSheet, setActiveSheet] = useState<'none' | 'bg' | 'edit' | 'effects'>('none');
+  const [windowHeight, setWindowHeight] = useState(800);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const selectedLayer = useMemo(() => layers.find(l => l.id === selectedLayerId), [layers, selectedLayerId]);
+
+  // Handle layer tap to auto-open edit panel
+  useEffect(() => {
+    const handleLayerTapped = () => {
+      setActiveSheet('edit');
+      openSheet('collapsed');
+    };
+    window.addEventListener('layer-tapped', handleLayerTapped);
+    return () => window.removeEventListener('layer-tapped', handleLayerTapped);
+  }, [openSheet]);
+
+  // Sync sheet state with layer selection
+  useEffect(() => {
+    if (selectedLayerId && activeSheet === 'none') {
+      setActiveSheet('edit');
+      openSheet('collapsed');
+    } else if (!selectedLayerId && activeSheet === 'edit') {
+      setActiveSheet('none');
+      closeSheet();
+    }
+  }, [selectedLayerId, activeSheet, openSheet, closeSheet]);
+
+  // Sync activeSheet with sheetState
+  useEffect(() => {
+    if (activeSheet === 'none' && sheetState !== 'closed') closeSheet();
+    else if (activeSheet !== 'none' && sheetState === 'closed') openSheet('collapsed');
+  }, [activeSheet, sheetState, closeSheet, openSheet]);
+
+  useEffect(() => {
+    if (sheetState === 'closed') setActiveSheet('none');
+  }, [sheetState]);
+
+  // Calculate scaling based on panel state
+  const { scale } = useMemo(() => {
+    if (!isMobile || !mounted) return { scale: 1, offsetY: 0 };
+    return calculateViewportScale(windowHeight, panelHeight, 1920); 
+  }, [isMobile, mounted, windowHeight, panelHeight]);
+
+  // Ensure selected object is visible
+  useEffect(() => {
+    if (selectedLayer && sheetState !== 'closed' && isMobile && mounted) {
+      // Mock bounds for demonstration. In a fully integrated version, CanvasArea would write its layer bounds to a global store
+      const mockBounds = { y: 800, height: 200 };
+      ensureVisible(mockBounds, panelHeight, windowHeight, scale);
+    } else {
+      ensureVisible(null, 0, windowHeight, scale);
+    }
+  }, [selectedLayer, sheetState, panelHeight, windowHeight, scale, ensureVisible, isMobile, mounted]);
+
+  const getSheetTitle = () => {
+    switch (activeSheet) {
+      case 'bg': return 'Canvas Settings';
+      case 'edit': return selectedLayer?.type === 'text' ? 'Edit Text' : 'Edit Image';
+      case 'effects': return 'Effects & Shapes';
+      default: return 'Editor';
+    }
+  };
+
+  const getSheetContent = () => {
+    switch (activeSheet) {
+      case 'bg': return <BackgroundPanel />;
+      case 'edit': return selectedLayer?.type === 'text' ? <TextPanel /> : (selectedLayer?.type === 'image' ? <ImagePanel /> : <div className="text-center p-4 text-zinc-500">Select a layer to edit</div>);
+      case 'effects': return <EffectsPanel />;
+      default: return null;
+    }
+  };
 
   const qualityOptions = [
     { label: 'Normal Quality', sub: '720p (Fast Upload)', width: 720 },
@@ -54,6 +153,8 @@ export default function EditorPage() {
   useHotkeys('delete, backspace', () => { if (selectedLayerId) deleteLayer(selectedLayerId); }, { preventDefault: true }, [selectedLayerId]);
   useHotkeys('ctrl+d, meta+d', () => { if (selectedLayerId) duplicateLayer(selectedLayerId); }, { preventDefault: true }, [selectedLayerId]);
 
+  if (!mounted) return null;
+
   return (
     <main
       data-editor-shell
@@ -69,7 +170,7 @@ export default function EditorPage() {
         data-canvas-area
         className="flex-1 md:h-full relative bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 dark:from-zinc-950 dark:via-black dark:to-zinc-900 overflow-hidden transition-colors duration-300 pb-[70px] md:pb-0"
       >
-        {/* Animated Background Pattern (lighter on mobile for performance) */}
+        {/* Animated Background Pattern */}
         <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.15),transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1),transparent_50%)]" />
           <div className="hidden sm:block absolute top-1/4 right-1/4 w-96 h-96 bg-blue-400/15 dark:bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
@@ -80,7 +181,15 @@ export default function EditorPage() {
         </div>
 
         <TopBar />
-        <CanvasArea />
+        
+        {/* Dynamic Canvas Viewport scaling (Only scales on Mobile) */}
+        {isMobile ? (
+          <CanvasViewport panelHeight={panelHeight} panOffset={panOffset} scale={scale}>
+            <CanvasArea />
+          </CanvasViewport>
+        ) : (
+          <CanvasArea />
+        )}
       </div>
 
       {/* ============ DESKTOP CONTROL PANEL ============ */}
@@ -92,9 +201,21 @@ export default function EditorPage() {
       </div>
       
       {/* ============ MOBILE ACTION BAR ============ */}
-      <MobileActionBar />
+      <MobileActionBar activeSheet={activeSheet} setActiveSheet={setActiveSheet} />
 
-      {/* ============ EXPORT MODAL (bottom-sheet on mobile) ============ */}
+      {/* ============ NEW MOBILE EDITOR BOTTOM SHEET ============ */}
+      <EditorBottomSheet 
+        isOpen={sheetState !== 'closed'} 
+        onClose={closeSheet}
+        title={getSheetTitle()}
+        snapPoints={snapPoints}
+        currentState={sheetState === 'closed' ? 'collapsed' : sheetState}
+        onStateChange={(state) => setSheetState(state)}
+      >
+        {getSheetContent()}
+      </EditorBottomSheet>
+
+      {/* ============ EXPORT MODAL ============ */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
           <div className="relative bg-gradient-to-br from-zinc-900/98 via-black/98 to-zinc-900/98 backdrop-blur-2xl border border-white/20 p-5 sm:p-6 rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-[0_20px_70px_rgba(0,0,0,0.9)] animate-slide-in-up sm:animate-scale-in max-h-[92vh] sm:max-h-[90vh] flex flex-col">
