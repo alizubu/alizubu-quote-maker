@@ -43,6 +43,7 @@ export default function EditorPage() {
     setExportModalOpen,
     undo,
     redo,
+    setSelectedLayer,
   } = useEditorStore();
   const [selectedQuality, setSelectedQuality] = useState<number>(1080);
   
@@ -95,8 +96,11 @@ export default function EditorPage() {
   }, [activeSheet, sheetState, closeSheet, openSheet]);
 
   useEffect(() => {
-    if (sheetState === 'closed') setActiveSheet('none');
-  }, [sheetState]);
+    if (sheetState === 'closed') {
+      setActiveSheet('none');
+      setSelectedLayer(null);
+    }
+  }, [sheetState, setSelectedLayer]);
 
 
 

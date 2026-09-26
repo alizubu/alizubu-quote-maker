@@ -125,20 +125,108 @@ export default function TextPanel() {
       </AccordionSection>
 
       <AccordionSection title="Shadow">
-        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
-          <p className="text-xs">Shadow controls coming soon</p>
+        <div className="flex justify-between items-center mb-4">
+           <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Enable Shadow</span>
+           <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowEnabled: !selectedLayer.shadowEnabled }); }} className={`w-10 h-5 rounded-full relative transition-colors ${selectedLayer.shadowEnabled ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+             <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${selectedLayer.shadowEnabled ? 'left-5' : 'left-1'}`} />
+           </button>
         </div>
+        {selectedLayer.shadowEnabled && (
+          <div className="animate-in slide-in-from-top-2 duration-200">
+            {selectedLayer.glowEnabled && <p className="text-[10px] text-amber-500 mb-3 leading-tight bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">Shadow is overridden by Glow effect.</p>}
+            <div className="flex justify-between gap-2 mb-4">
+              <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'transparent', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">None</button>
+              <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Soft</button>
+              <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'rgba(0,0,0,1)', shadowBlur: 0, shadowOffsetX: 4, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Hard</button>
+            </div>
+            <ColorPickerPopup label="Shadow Color" color={selectedLayer.shadowColor || 'rgba(0,0,0,0.5)'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { shadowColor: c })} />
+            <div className="mt-4 space-y-4">
+              <StepperSlider label="Offset X" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetX: v })} unit="px" />
+              <StepperSlider label="Offset Y" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetY: v })} unit="px" />
+              <StepperSlider label="Blur Radius" value={selectedLayer.shadowBlur || 0} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowBlur: v })} unit="px" />
+              <StepperSlider label="Opacity" value={selectedLayer.shadowOpacity !== undefined ? selectedLayer.shadowOpacity : 1} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOpacity: v })} />
+            </div>
+          </div>
+        )}
       </AccordionSection>
 
       <AccordionSection title="Effects">
-        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
-          <p className="text-xs">Effects coming soon</p>
+        {/* Glow */}
+        <div className="mb-5 pb-5 border-b border-zinc-100 dark:border-white/5">
+          <div className="flex justify-between items-center mb-3">
+             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Glow Effect</span>
+             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { glowEnabled: !selectedLayer.glowEnabled }); }} className={`w-10 h-5 rounded-full relative transition-colors ${selectedLayer.glowEnabled ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+               <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${selectedLayer.glowEnabled ? 'left-5' : 'left-1'}`} />
+             </button>
+          </div>
+          {selectedLayer.glowEnabled && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <ColorPickerPopup label="Glow Color" color={selectedLayer.glowColor || '#ffffff'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { glowColor: c })} />
+              <StepperSlider label="Intensity" value={selectedLayer.glowIntensity !== undefined ? selectedLayer.glowIntensity : 15} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { glowIntensity: v })} unit="px" />
+            </div>
+          )}
+        </div>
+
+        {/* Background Highlight */}
+        <div className="mb-5 pb-5 border-b border-zinc-100 dark:border-white/5">
+          <div className="flex justify-between items-center mb-3">
+             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Background Highlight</span>
+             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { hasBgHighlight: !selectedLayer.hasBgHighlight }); }} className={`w-10 h-5 rounded-full relative transition-colors ${selectedLayer.hasBgHighlight ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+               <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${selectedLayer.hasBgHighlight ? 'left-5' : 'left-1'}`} />
+             </button>
+          </div>
+          {selectedLayer.hasBgHighlight && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <ColorPickerPopup label="Background Color" color={selectedLayer.bgHighlightColor || '#ffea00'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { bgHighlightColor: c })} />
+              <StepperSlider label="Opacity" value={selectedLayer.bgHighlightOpacity !== undefined ? selectedLayer.bgHighlightOpacity : 1} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { bgHighlightOpacity: v })} />
+              <StepperSlider label="Corner Radius" value={selectedLayer.bgHighlightRadius || 0} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { bgHighlightRadius: v })} unit="px" />
+              <StepperSlider label="Padding" value={selectedLayer.bgHighlightPadding || 8} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { bgHighlightPadding: v })} unit="px" />
+            </div>
+          )}
+        </div>
+
+        {/* Gradient Fill */}
+        <div className="mb-2">
+          <div className="flex justify-between items-center mb-3">
+             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Gradient Fill</span>
+             <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { isGradient: !selectedLayer.isGradient }); }} className={`w-10 h-5 rounded-full relative transition-colors ${selectedLayer.isGradient ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+               <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${selectedLayer.isGradient ? 'left-5' : 'left-1'}`} />
+             </button>
+          </div>
+          {selectedLayer.isGradient && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <ColorPickerPopup label="Color 1" color={selectedLayer.gradientColors?.[0] || '#f6d365'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { gradientColors: [c, selectedLayer.gradientColors?.[1] || '#fda085'] })} />
+              <ColorPickerPopup label="Color 2" color={selectedLayer.gradientColors?.[1] || '#fda085'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { gradientColors: [selectedLayer.gradientColors?.[0] || '#f6d365', c] })} />
+            </div>
+          )}
         </div>
       </AccordionSection>
 
       <AccordionSection title="Transform">
-        <div className="flex flex-col items-center justify-center py-4 text-zinc-400">
-          <p className="text-xs">Transform controls coming soon</p>
+        <div className="space-y-4">
+          <StepperSlider label="Scale" value={Math.round(selectedLayer.scaleX * 100)} min={10} max={400} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { scaleX: v / 100, scaleY: v / 100 })} unit="%" />
+          <StepperSlider label="Rotation" value={Math.round(selectedLayer.rotation)} min={-180} max={180} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { rotation: v })} unit="°" />
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 block">Flip</label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-100 dark:bg-black/40 rounded-xl mb-3 border border-zinc-200 dark:border-white/5">
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { scaleX: selectedLayer.scaleX * -1 }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white`}>Flip Horizontal</button>
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { scaleY: selectedLayer.scaleY * -1 }); }} className={`py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white`}>Flip Vertical</button>
+            </div>
+          </div>
+          
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 block">Align to Canvas</label>
+            <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-100 dark:bg-black/40 rounded-xl border border-zinc-200 dark:border-white/5">
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { x: 0 }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Left</button>
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { x: (useEditorStore.getState().canvasWidth / 2) - ((selectedLayer.width || 200) * selectedLayer.scaleX) / 2 }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Center</button>
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { x: useEditorStore.getState().canvasWidth - ((selectedLayer.width || 200) * selectedLayer.scaleX) }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Right</button>
+               
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { y: 0 }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Top</button>
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { y: (useEditorStore.getState().canvasHeight / 2) - ((selectedLayer.fontSize * selectedLayer.scaleY) / 2) }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Middle</button>
+               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { y: useEditorStore.getState().canvasHeight - (selectedLayer.fontSize * selectedLayer.scaleY) }); }} className="py-1.5 rounded-lg text-xs font-medium transition-all opacity-70 hover:opacity-100 bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white text-center">Bottom</button>
+            </div>
+          </div>
         </div>
       </AccordionSection>
 

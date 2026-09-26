@@ -36,9 +36,20 @@ export interface TextLayer extends BaseLayer {
   shadowBlur: number;
   shadowOffsetX: number;
   shadowOffsetY: number;
+  shadowOpacity?: number;
+  shadowEnabled?: boolean;
   stroke: string;
   strokeWidth: number;
   strokeType: 'outer' | 'inner';
+  width?: number;
+  hasBgHighlight?: boolean;
+  bgHighlightColor?: string;
+  bgHighlightOpacity?: number;
+  bgHighlightRadius?: number;
+  bgHighlightPadding?: number;
+  glowEnabled?: boolean;
+  glowColor?: string;
+  glowIntensity?: number;
 }
 
 export interface ImageLayer extends BaseLayer {
