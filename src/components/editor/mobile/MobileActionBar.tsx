@@ -35,23 +35,14 @@ export default function MobileActionBar({ activeSheet, setActiveSheet }: MobileA
         <Plus size={28} />
       </button>
 
-      {selectedLayerId ? (
-        <button 
-          onClick={() => setActiveSheet('edit')}
-          className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${activeSheet === 'edit' ? 'text-purple-500' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
-        >
-          <Settings2 size={20} className="mb-1" />
-          <span className="text-[10px] font-medium">Edit</span>
-        </button>
-      ) : (
-        <button 
-           onClick={() => setActiveSheet('effects')}
-           className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${activeSheet === 'effects' ? 'text-purple-500' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
-         >
-           <Sparkles size={20} className="mb-1" />
-           <span className="text-[10px] font-medium">Effects</span>
-         </button>
-      )}
+      <button 
+        onClick={() => setActiveSheet('edit')}
+        disabled={!selectedLayerId}
+        className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${!selectedLayerId ? 'opacity-40 cursor-not-allowed text-zinc-400' : (activeSheet === 'edit' ? 'text-purple-500' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white')}`}
+      >
+        <Settings2 size={20} className="mb-1" />
+        <span className="text-[10px] font-medium">Edit</span>
+      </button>
     </div>
   );
 }

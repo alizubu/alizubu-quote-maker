@@ -106,16 +106,44 @@ export default function EditorPage() {
 
   const getSheetTitle = () => {
     switch (activeSheet) {
-      case 'bg': return 'Canvas Settings';
+      case 'bg': return 'Canvas & Effects';
       case 'edit': return selectedLayer?.type === 'text' ? 'Edit Text' : 'Edit Image';
       case 'effects': return 'Effects & Shapes';
       default: return 'Editor';
     }
   };
 
+  const CanvasAndEffectsTabs = () => {
+    const [tab, setTab] = useState<'canvas' | 'effects'>('canvas');
+    return (
+      <div className="flex flex-col">
+        <div className="relative mb-2">
+          <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x px-1 justify-center">
+            {['Canvas', 'Effects'].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t.toLowerCase() as any)}
+                className={`flex-none px-6 py-2 rounded-xl text-xs font-bold tracking-wide uppercase transition-all snap-center border ${
+                  tab === t.toLowerCase() 
+                    ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent shadow-sm' 
+                    : 'bg-zinc-100 dark:bg-black/40 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/5 hover:border-zinc-300'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="animate-in fade-in duration-200 min-h-[250px]">
+          {tab === 'canvas' ? <BackgroundPanel /> : <EffectsPanel />}
+        </div>
+      </div>
+    );
+  };
+
   const getSheetContent = () => {
     switch (activeSheet) {
-      case 'bg': return <BackgroundPanel />;
+      case 'bg': return <CanvasAndEffectsTabs />;
       case 'edit': return selectedLayer?.type === 'text' ? <TextPanel /> : (selectedLayer?.type === 'image' ? <ImagePanel /> : <div className="text-center p-4 text-zinc-500">Select a layer to edit</div>);
       case 'effects': return <EffectsPanel />;
       default: return null;
