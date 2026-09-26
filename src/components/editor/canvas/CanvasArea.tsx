@@ -56,12 +56,19 @@ export default function CanvasArea() {
     return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); };
   }, [isTypingOverlayOpen]);
 
+  // --- Zoom Bounds ---
+  const MIN_ZOOM = 0.25;
+  const MAX_ZOOM = 4.0;
+  const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+
   // --- Computed Display Values ---
   // Stage stays at 1:1 (no transforms). The artboard Group handles all zoom/pan.
-  const baseScale = Math.min((stageSize.width * 0.90) / canvasWidth, (stageSize.height * 0.90) / canvasHeight) || 1;
+  const MARGIN = 16; // px padding around artboard
+  const baseScale = Math.min((stageSize.width - MARGIN * 2) / canvasWidth, (stageSize.height - MARGIN * 2) / canvasHeight) || 1;
   const finalScale = baseScale * stageScale;
   const groupX = (stageSize.width - canvasWidth * finalScale) / 2 + stagePosition.x;
   const groupY = (stageSize.height - canvasHeight * finalScale) / 2 + stagePosition.y;
+  const zoomPercent = Math.round(stageScale * 100);
 
   // Helper: read fresh state for rapid event handlers
   const getTransform = useCallback(() => {
@@ -87,7 +94,7 @@ export default function CanvasArea() {
       y: (pointer.y - t.groupY) / t.finalScale 
     };
     
-    const newSS = e.evt.deltaY < 0 ? t.stageScale * scaleBy : t.stageScale / scaleBy;
+    const newSS = clampZoom(e.evt.deltaY < 0 ? t.stageScale * scaleBy : t.stageScale / scaleBy);
     const newFS = baseScale * newSS;
     const newGX = pointer.x - mousePointTo.x * newFS;
     const newGY = pointer.y - mousePointTo.y * newFS;
@@ -131,7 +138,7 @@ export default function CanvasArea() {
       };
 
       const scaleBy = dist / lastDist.current;
-      const newSS = t.stageScale * scaleBy;
+      const newSS = clampZoom(t.stageScale * scaleBy);
       const newFS = baseScale * newSS;
 
       const dx = newCenter.x - lastCenter.current.x;
@@ -181,7 +188,7 @@ export default function CanvasArea() {
   const zoomCanvas = (direction: 'in' | 'out') => {
     const scaleBy = 1.25;
     const t = getTransform();
-    const newSS = direction === 'in' ? t.stageScale * scaleBy : t.stageScale / scaleBy;
+    const newSS = clampZoom(direction === 'in' ? t.stageScale * scaleBy : t.stageScale / scaleBy);
     const newFS = baseScale * newSS;
     
     const center = { x: stageSize.width / 2, y: stageSize.height / 2 };
@@ -199,16 +206,19 @@ export default function CanvasArea() {
     setStagePosition({ x: newGX - cx, y: newGY - cy });
   };
 
-  // --- Container Resize ---
+  // --- Container Resize (ResizeObserver for responsive tracking) ---
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        setStageSize({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setStageSize({ width, height });
+        }
       }
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
   }, []); 
 
   // --- Export Engine ---
@@ -333,19 +343,22 @@ export default function CanvasArea() {
     <div ref={containerRef} className={`w-full h-full flex items-center justify-center bg-zinc-100 dark:bg-[#09090b] overflow-hidden relative transition-colors duration-300 ${isSpacePressed ? 'cursor-grab active:cursor-grabbing' : ''}`}>
       <style dangerouslySetInnerHTML={{ __html: customFonts.map(f => `@font-face { font-family: '${f.name}'; src: url('${f.url}'); }`).join('\n') }} />
 
-      {(stageScale !== 1 || stagePosition.x !== 0 || stagePosition.y !== 0) && (
-        <button onClick={resetWorkspace} className="absolute bottom-6 left-6 z-10 p-3 bg-white/80 dark:bg-black/50 hover:bg-blue-500 dark:hover:bg-blue-600 border border-zinc-200 dark:border-white/10 rounded-full text-zinc-700 dark:text-white hover:text-white backdrop-blur-md shadow-lg transition-all active:scale-90" title="Reset View">
-           <Maximize size={16} />
+      {/* Zoom Controls */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-black/70 dark:bg-black/80 backdrop-blur-xl rounded-full px-1.5 py-1.5 border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+        <button onClick={() => zoomCanvas('out')} className="p-2 hover:bg-white/10 rounded-full text-white/80 hover:text-white transition-all active:scale-90" title="Zoom Out">
+          <ZoomOut size={16} />
         </button>
-      )}
-
-      <div className="absolute bottom-6 right-6 z-10 flex flex-row gap-3">
-        <button onClick={() => zoomCanvas('out')} className="p-3 bg-zinc-800/80 hover:bg-zinc-700/80 dark:bg-black/50 dark:hover:bg-zinc-800/80 border border-zinc-200/20 dark:border-white/10 rounded-full text-white backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.3)] transition-all active:scale-90" title="Zoom Out">
-          <ZoomOut size={20} />
+        <button onClick={resetWorkspace} className="min-w-[52px] px-2 py-1 text-[11px] font-mono font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95 text-center" title="Reset to Fit">
+          {zoomPercent}%
         </button>
-        <button onClick={() => zoomCanvas('in')} className="p-3 bg-zinc-800/80 hover:bg-zinc-700/80 dark:bg-black/50 dark:hover:bg-zinc-800/80 border border-zinc-200/20 dark:border-white/10 rounded-full text-white backdrop-blur-md shadow-[0_0_15px_rgba(0,0,0,0.3)] transition-all active:scale-90" title="Zoom In">
-          <ZoomIn size={20} />
+        <button onClick={() => zoomCanvas('in')} className="p-2 hover:bg-white/10 rounded-full text-white/80 hover:text-white transition-all active:scale-90" title="Zoom In">
+          <ZoomIn size={16} />
         </button>
+        {(stageScale !== 1 || stagePosition.x !== 0 || stagePosition.y !== 0) && (
+          <button onClick={resetWorkspace} className="p-2 hover:bg-white/10 rounded-full text-white/80 hover:text-white transition-all active:scale-90 border-l border-white/10 ml-0.5 pl-2.5" title="Fit to Screen">
+            <Maximize size={14} />
+          </button>
+        )}
       </div>
 
       <div className="w-full h-full overflow-hidden relative pointer-events-auto">

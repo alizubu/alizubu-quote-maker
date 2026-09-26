@@ -15,8 +15,6 @@ import { useEditorStore } from '../store/useEditorStore';
 
 // New Mobile Architecture
 import { useBottomSheet } from '../hooks/useBottomSheet';
-import { useEnsureVisible } from '../hooks/useEnsureVisible';
-import { calculateViewportScale } from '../utils/canvasViewport';
 import CanvasViewport from '../components/editor/CanvasViewport';
 import EditorBottomSheet from '../components/editor/EditorBottomSheet';
 import BackgroundPanel from '../components/editor/panels/BackgroundPanel';
@@ -50,7 +48,7 @@ export default function EditorPage() {
   
   // Mobile Editor Architecture State
   const { sheetState, setSheetState, panelHeight, openSheet, closeSheet, snapPoints } = useBottomSheet();
-  const { panOffset, ensureVisible } = useEnsureVisible();
+
   const [activeSheet, setActiveSheet] = useState<'none' | 'bg' | 'edit' | 'effects'>('none');
   const [windowHeight, setWindowHeight] = useState(800);
   const [isMobile, setIsMobile] = useState(false);
@@ -100,22 +98,7 @@ export default function EditorPage() {
     if (sheetState === 'closed') setActiveSheet('none');
   }, [sheetState]);
 
-  // Calculate scaling based on panel state
-  const { scale } = useMemo(() => {
-    if (!isMobile || !mounted) return { scale: 1, offsetY: 0 };
-    return calculateViewportScale(windowHeight, panelHeight, 1920); 
-  }, [isMobile, mounted, windowHeight, panelHeight]);
 
-  // Ensure selected object is visible
-  useEffect(() => {
-    if (selectedLayer && sheetState !== 'closed' && isMobile && mounted) {
-      // Mock bounds for demonstration. In a fully integrated version, CanvasArea would write its layer bounds to a global store
-      const mockBounds = { y: 800, height: 200 };
-      ensureVisible(mockBounds, panelHeight, windowHeight, scale);
-    } else {
-      ensureVisible(null, 0, windowHeight, scale);
-    }
-  }, [selectedLayer, sheetState, panelHeight, windowHeight, scale, ensureVisible, isMobile, mounted]);
 
   const getSheetTitle = () => {
     switch (activeSheet) {
@@ -184,7 +167,7 @@ export default function EditorPage() {
         
         {/* Dynamic Canvas Viewport scaling (Only scales on Mobile) */}
         {isMobile ? (
-          <CanvasViewport panelHeight={panelHeight} panOffset={panOffset} scale={scale}>
+          <CanvasViewport panelHeight={panelHeight}>
             <CanvasArea />
           </CanvasViewport>
         ) : (
