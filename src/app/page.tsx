@@ -107,10 +107,42 @@ export default function EditorPage() {
   const getSheetTitle = () => {
     switch (activeSheet) {
       case 'bg': return 'Canvas';
-      case 'edit': return selectedLayer?.type === 'text' ? 'Edit Text' : 'Edit Image';
+      case 'edit': return selectedLayer ? (selectedLayer.type === 'text' ? 'Edit Text' : 'Edit Image') : 'Edit';
       case 'effects': return 'Effects & Shapes';
       default: return 'Editor';
     }
+  };
+
+  const EditAndEffectsTabs = () => {
+    const [tab, setTab] = useState<'edit' | 'effects'>('edit');
+    return (
+      <div className="flex flex-col">
+        <div className="relative mb-2">
+          <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x px-1 justify-center">
+            {['Edit', 'Effects'].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t.toLowerCase() as any)}
+                className={`flex-none px-6 py-2 rounded-xl text-xs font-bold tracking-wide uppercase transition-all snap-center border ${
+                  tab === t.toLowerCase() 
+                    ? 'bg-zinc-800 text-white dark:bg-white dark:text-black border-transparent shadow-sm' 
+                    : 'bg-zinc-100 dark:bg-black/40 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-white/5 hover:border-zinc-300'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="animate-in fade-in duration-200 min-h-[250px]">
+          {tab === 'edit' ? (
+            selectedLayer?.type === 'text' ? <TextPanel /> : (selectedLayer?.type === 'image' ? <ImagePanel /> : <div className="text-center p-4 text-zinc-500">Select a layer to edit</div>)
+          ) : (
+            <EffectsPanel />
+          )}
+        </div>
+      </div>
+    );
   };
 
 
@@ -118,7 +150,7 @@ export default function EditorPage() {
   const getSheetContent = () => {
     switch (activeSheet) {
       case 'bg': return <BackgroundPanel />;
-      case 'edit': return selectedLayer?.type === 'text' ? <TextPanel /> : (selectedLayer?.type === 'image' ? <ImagePanel /> : <div className="text-center p-4 text-zinc-500">Select a layer to edit</div>);
+      case 'edit': return <EditAndEffectsTabs />;
       case 'effects': return <EffectsPanel />;
       default: return null;
     }
