@@ -29,8 +29,16 @@ export default function MobileActionBar({ activeSheet, setActiveSheet }: MobileA
       </button>
 
       <button 
+        onClick={() => setActiveSheet('effects')}
+        className={`flex flex-col items-center justify-center w-16 h-12 rounded-xl transition-colors ${activeSheet === 'effects' ? 'text-pink-500' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+      >
+        <Sparkles size={20} className="mb-1" />
+        <span className="text-[10px] font-medium">Effects</span>
+      </button>
+
+      <button 
         onClick={() => addTextLayer({})}
-        className="relative -top-5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 hover:scale-105 active:scale-95 transition-all"
+        className="relative -top-5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/30 hover:scale-105 active:scale-95 transition-all shrink-0"
       >
         <Plus size={28} />
       </button>
