@@ -5,7 +5,7 @@ import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
 import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
 import { StepperSlider, ColorPickerPopup } from './BackgroundPanel';
 
-const TABS = ['Typography', 'Shadow', 'Effects', 'Transform'];
+const TABS = ['Typography', 'Shadow', 'Transform'];
 
 export default function TextPanel() {
   const { layers, selectedLayerId, updateLayer, setTypingOverlayOpen, saveHistory, customFonts } = useEditorStore();
@@ -123,29 +123,41 @@ export default function TextPanel() {
 
         {activeTab === 'Shadow' && (
           <div key="Shadow" className="space-y-4 animate-in fade-in duration-200">
-            <div className="flex justify-between items-center mb-4">
-               <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Enable Shadow</span>
-               <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowEnabled: !selectedLayer.shadowEnabled }); }} className={`w-10 h-5 rounded-full relative transition-colors ${selectedLayer.shadowEnabled ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
-                 <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${selectedLayer.shadowEnabled ? 'left-5' : 'left-1'}`} />
-               </button>
-            </div>
-            {selectedLayer.shadowEnabled && (
-              <div className="animate-in slide-in-from-top-2 duration-200">
-                {selectedLayer.glowEnabled && <p className="text-[10px] text-amber-500 mb-3 leading-tight bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">Shadow is overridden by Glow effect.</p>}
-                <div className="flex justify-between gap-2 mb-4">
-                  <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'transparent', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">None</button>
-                  <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Soft</button>
-                  <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowColor: 'rgba(0,0,0,1)', shadowBlur: 0, shadowOffsetX: 4, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Hard</button>
-                </div>
-                <ColorPickerPopup label="Shadow Color" color={selectedLayer.shadowColor || 'rgba(0,0,0,0.5)'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { shadowColor: c })} />
-                <div className="mt-4 space-y-4">
-                  <StepperSlider label="Offset X" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetX: v })} unit="px" />
-                  <StepperSlider label="Offset Y" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOffsetY: v })} unit="px" />
-                  <StepperSlider label="Blur Radius" value={selectedLayer.shadowBlur || 0} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowBlur: v })} unit="px" />
-                  <StepperSlider label="Opacity" value={selectedLayer.shadowOpacity !== undefined ? selectedLayer.shadowOpacity : 1} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowOpacity: v })} />
-                </div>
+            <div className="animate-in slide-in-from-top-2 duration-200">
+              {selectedLayer.glowEnabled && <p className="text-[10px] text-amber-500 mb-3 leading-tight bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">Shadow is overridden by Glow effect.</p>}
+              <div className="flex justify-between gap-2 mb-4">
+                <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowEnabled: true, shadowColor: 'transparent', shadowBlur: 0, shadowOffsetX: 0, shadowOffsetY: 0 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">None</button>
+                <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowEnabled: true, shadowColor: 'rgba(0,0,0,0.5)', shadowBlur: 4, shadowOffsetX: 0, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Soft</button>
+                <button onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { shadowEnabled: true, shadowColor: 'rgba(0,0,0,1)', shadowBlur: 0, shadowOffsetX: 4, shadowOffsetY: 4 }); }} className="flex-1 py-1.5 text-[10px] uppercase font-bold rounded-lg bg-zinc-100 dark:bg-black/40 hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-white/5">Hard</button>
               </div>
-            )}
+              <ColorPickerPopup label="Shadow Color" color={selectedLayer.shadowColor || 'rgba(0,0,0,0.5)'} onAction={saveHistory} onChange={(c) => updateLayer(selectedLayer.id, { shadowEnabled: true, shadowColor: c })} />
+              <div className="mt-4 space-y-4">
+                <StepperSlider label="Offset X" value={selectedLayer.shadowOffsetX || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowEnabled: true, shadowOffsetX: v })} unit="px" />
+                <StepperSlider label="Offset Y" value={selectedLayer.shadowOffsetY || 0} min={-50} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowEnabled: true, shadowOffsetY: v })} unit="px" />
+                <StepperSlider label="Blur Radius" value={selectedLayer.shadowBlur || 0} min={0} max={50} step={1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowEnabled: true, shadowBlur: v })} unit="px" />
+                <StepperSlider label="Opacity" value={selectedLayer.shadowOpacity !== undefined ? selectedLayer.shadowOpacity : 1} min={0} max={1} step={0.1} onAction={saveHistory} onChange={(v: number) => updateLayer(selectedLayer.id, { shadowEnabled: true, shadowOpacity: v })} />
+              </div>
+            </div>
+
+            {/* Blend Mode */}
+            <div className="pt-4 border-t border-zinc-100 dark:border-white/5 space-y-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Blend Mode</span>
+              <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x">
+                {['source-over', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion'].map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { blendMode: mode }); }}
+                    className={`flex-none px-4 py-2 rounded-xl text-xs font-medium capitalize transition-all snap-center border ${
+                      (selectedLayer.blendMode || 'source-over') === mode 
+                        ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30' 
+                        : 'bg-zinc-100 dark:bg-black/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/5 hover:border-blue-400/50 hover:bg-zinc-200 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {mode.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

@@ -117,6 +117,25 @@ export default function ImagePanel() {
           onAction={saveHistory} 
           onChange={(v:number) => updateLayer(selectedLayer.id, { opacity: v })} 
         />
+
+        <div className="pt-4 border-t border-zinc-100 dark:border-white/5 space-y-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Blend Mode</span>
+          <div className="flex overflow-x-auto custom-scrollbar pb-2 gap-2 snap-x">
+            {['source-over', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'soft-light', 'difference', 'exclusion'].map((mode) => (
+              <button
+                key={mode}
+                onClick={() => { saveHistory(); updateLayer(selectedLayer.id, { blendMode: mode } as any); }}
+                className={`flex-none px-4 py-2 rounded-xl text-xs font-medium capitalize transition-all snap-center border ${
+                  (selectedLayer.blendMode || 'source-over') === mode 
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30' 
+                    : 'bg-zinc-100 dark:bg-black/40 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/5 hover:border-blue-400/50 hover:bg-zinc-200 dark:hover:bg-white/5'
+                }`}
+              >
+                {mode.replace('-', ' ')}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

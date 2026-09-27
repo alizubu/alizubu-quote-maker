@@ -8,11 +8,10 @@ import { Undo2, Redo2, Palette, Type, Layers, Sparkles } from 'lucide-react';
 import BackgroundPanel from './BackgroundPanel';
 import TextPanel from './TextPanel';
 import ImagePanel from './ImagePanel';
-import EffectsPanel from './EffectsPanel';
 
 export default function ControlPanel() {
   const { undo, redo, past, future, layers, selectedLayerId } = useEditorStore();
-  const [activeTab, setActiveTab] = useState<'bg' | 'edit' | 'effects'>('edit');
+  const [activeTab, setActiveTab] = useState<'bg' | 'edit'>('edit');
   const [mounted, setMounted] = useState(false);
 
   const selectedLayer = layers.find(l => l.id === selectedLayerId);
@@ -80,7 +79,6 @@ export default function ControlPanel() {
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         {activeTab === 'bg' && <BackgroundPanel />}
         {activeTab === 'edit' && renderEditPanel()}
-        {activeTab === 'effects' && <EffectsPanel />}
       </div>
 
       {/* BOTTOM NAVIGATION TABS WITH GLASSMORPHISM */}
@@ -92,8 +90,7 @@ export default function ControlPanel() {
         <div className="relative flex gap-1.5 sm:gap-2 p-2.5 sm:p-3">
           {[
             { id: 'bg', icon: <Palette size={18} />, label: 'Background', gradient: 'from-orange-500 to-red-500' },
-            { id: 'edit', icon: <Type size={18} />, label: 'Edit', gradient: 'from-blue-500 to-cyan-500' },
-            { id: 'effects', icon: <Sparkles size={18} />, label: 'Effects', gradient: 'from-purple-500 to-pink-500' }
+            { id: 'edit', icon: <Type size={18} />, label: 'Edit', gradient: 'from-blue-500 to-cyan-500' }
           ].map((tab) => (
             <button 
               key={tab.id}
