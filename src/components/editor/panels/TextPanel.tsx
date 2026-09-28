@@ -5,7 +5,7 @@ import { useEditorStore, TextLayer } from '../../../store/useEditorStore';
 import { AlignLeft, AlignCenter, AlignRight, Type, Edit2, Bold, Italic, Underline } from 'lucide-react';
 import { StepperSlider, ColorPickerPopup } from './BackgroundPanel';
 
-const TABS = ['Typography', 'Shadow', 'Transform'];
+const TABS = ['Typography', 'Shadow', 'Transform', 'Effects'];
 
 export default function TextPanel() {
   const { layers, selectedLayerId, updateLayer, setTypingOverlayOpen, saveHistory, customFonts } = useEditorStore();
