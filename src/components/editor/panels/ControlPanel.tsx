@@ -16,6 +16,7 @@ export default function ControlPanel() {
 
   const selectedLayer = layers.find(l => l.id === selectedLayerId);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
   if (!mounted) return <div className="h-full bg-[#f4f4f5] dark:bg-[#050505]"></div>;
 

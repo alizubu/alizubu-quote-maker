@@ -56,6 +56,7 @@ export default function EditorPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const handleResize = () => {
       setWindowHeight(window.innerHeight);
@@ -78,8 +79,11 @@ export default function EditorPage() {
     return () => window.removeEventListener('layer-tapped', handleLayerTapped);
   }, [openSheet]);
 
-  // Sync sheet state with layer selection
-  useEffect(() => {
+  const [prevSelectedLayerId, setPrevSelectedLayerId] = useState(selectedLayerId);
+
+  // Sync sheet state with layer selection (Adjusting state during render to avoid cascading updates)
+  if (selectedLayerId !== prevSelectedLayerId) {
+    setPrevSelectedLayerId(selectedLayerId);
     if (selectedLayerId && activeSheet === 'none') {
       setActiveSheet('edit');
       openSheet('collapsed');
@@ -87,7 +91,7 @@ export default function EditorPage() {
       setActiveSheet('none');
       closeSheet();
     }
-  }, [selectedLayerId, activeSheet, openSheet, closeSheet]);
+  }
 
   // Sync activeSheet with sheetState
   useEffect(() => {
@@ -97,6 +101,7 @@ export default function EditorPage() {
 
   useEffect(() => {
     if (sheetState === 'closed') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveSheet('none');
       setSelectedLayer(null);
     }

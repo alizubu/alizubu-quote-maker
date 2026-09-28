@@ -38,7 +38,9 @@ export interface ColorPickerPopupProps {
 
 export const ColorPickerPopup = ({ label, color, onChange, onAction }: ColorPickerPopupProps) => {
   const presets = ['#FFFFFF', '#000000', '#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#8b5cf6', 'transparent'];
-  const displayColor = color === 'transparent' || !color ? '#ffffff00' : color;
+  // If color is transparent, start the color picker at white (fully opaque) 
+  // so the user doesn't get "stuck" with an invisible color while dragging.
+  const displayColor = color === 'transparent' || !color ? '#ffffff' : color;
   
   return (
     <div className="flex items-center justify-between p-2.5 bg-zinc-100 dark:bg-black/40 rounded-xl border border-zinc-200/50 dark:border-white/5">
@@ -92,6 +94,7 @@ export default function BackgroundPanel() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
