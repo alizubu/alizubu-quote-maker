@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Trash2 } from 'lucide-react';
 import { useEditorStore } from '../../../store/useEditorStore';
+import { EmojiTextarea } from '@/components/EmojiTextarea';
 
 export default function TypingOverlay() {
   const { isTypingOverlayOpen, setTypingOverlayOpen, selectedLayerId, layers, updateLayer } = useEditorStore();
@@ -38,11 +39,11 @@ export default function TypingOverlay() {
           </button>
         </div>
       </div>
-      <textarea 
+      <EmojiTextarea 
         autoFocus 
         value={localTextValue} 
-        onChange={(e) => setLocalTextValue(e.target.value)} 
-        className="flex-1 w-full bg-transparent text-white text-2xl text-center resize-none outline-none font-sans pt-12 placeholder-white/10" 
+        onValueChange={(val) => setLocalTextValue(val)} 
+        className="flex-1 w-full text-2xl text-center font-sans pt-12" 
         placeholder="Type content here..." 
       />
     </div>

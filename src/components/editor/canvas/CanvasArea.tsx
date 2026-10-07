@@ -256,28 +256,35 @@ export default function CanvasArea() {
           stage.batchDraw();
 
           const pixelRatio = targetWidth / canvasWidth;
-          const link = document.createElement('a');
-          link.download = `Alizubu_${targetWidth}px.png`;
-          link.href = stage.toDataURL({ 
-            pixelRatio, 
-            mimeType: 'image/png',
-            x: 0, y: 0, width: canvasWidth, height: canvasHeight
+          const nodeToExport = stage.container();
+          
+          import('html-to-image').then(({ toPng }) => {
+            toPng(nodeToExport, {
+              pixelRatio,
+              width: canvasWidth,
+              height: canvasHeight,
+              style: { margin: '0' }
+            }).then((dataUrl) => {
+              const link = document.createElement('a');
+              link.download = `Alizubu_${targetWidth}px.png`;
+              link.href = dataUrl;
+              link.click();
+            }).finally(() => {
+              // Restore everything
+              stage.width(oldStageW);
+              stage.height(oldStageH);
+              group.scaleX(oldSX);
+              group.scaleY(oldSY);
+              group.x(oldGX);
+              group.y(oldGY);
+
+              // Re-cache background image for display performance
+              if (bgImageRef.current) {
+                bgImageRef.current.cache();
+              }
+              stage.batchDraw();
+            });
           });
-          link.click();
-
-          // Restore everything
-          stage.width(oldStageW);
-          stage.height(oldStageH);
-          group.scaleX(oldSX);
-          group.scaleY(oldSY);
-          group.x(oldGX);
-          group.y(oldGY);
-
-          // Re-cache background image for display performance
-          if (bgImageRef.current) {
-            bgImageRef.current.cache();
-          }
-          stage.batchDraw();
         }, 200);
       }
     };
