@@ -103,7 +103,7 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
         <Html
           divProps={{
             style: {
-              width: textObj.width ? `${textObj.width}px` : 'auto',
+              width: textObj.width ? `${textObj.width + 10}px` : 'auto',
               fontFamily: `${textObj.fontFamily}, sans-serif`,
               fontSize: `${textObj.fontSize}px`,
               fontStyle: textObj.isItalic ? 'italic' : 'normal',

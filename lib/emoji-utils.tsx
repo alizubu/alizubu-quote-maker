@@ -65,7 +65,7 @@ export function replaceEmojisWithNodes(text: string) {
         key={`${match.index}-${emojiStr}`}
         src={url}
         alt={emojiStr}
-        className="inline-block w-[1.25em] h-[1.25em] align-text-bottom mx-[0.05em]"
+        className="inline-block w-[1em] h-[1em] align-text-bottom mx-0"
         draggable={false}
         onError={(e) => {
           // Fallback if the image isn't found (e.g. newer emoji not in v15)

@@ -26,7 +26,14 @@ export default function TypingOverlay() {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-xl flex flex-col p-6 animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          closeTypingOverlay();
+        }
+      }}
+    >
       <div className="flex justify-between items-center mb-6 pt-[env(safe-area-inset-top)]">
         <span className="text-white/40 text-xs font-bold uppercase tracking-widest">Editor Keyboard</span>
         <div className="flex gap-3">
