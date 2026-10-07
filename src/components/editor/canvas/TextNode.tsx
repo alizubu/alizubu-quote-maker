@@ -99,11 +99,12 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
           cornerRadius={textObj.bgHighlightRadius || 0}
         />
       )}
-      {hasEmoji ? (
+      {hasEmoji && (
         <Html
           divProps={{
             style: {
-              width: textObj.width ? `${textObj.width + 10}px` : 'auto',
+              width: textObj.width ? `${textObj.width + 20}px` : 'auto',
+              marginLeft: textObj.width ? '-10px' : '0',
               fontFamily: `${textObj.fontFamily}, sans-serif`,
               fontSize: `${textObj.fontSize}px`,
               fontStyle: textObj.isItalic ? 'italic' : 'normal',
@@ -125,22 +126,22 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
         >
           <EmojiText text={textObj.text} />
         </Html>
-      ) : (
-        <Text
-          text={isTypingOverlayOpen && selectedLayerId === textObj.id ? "" : textObj.text}
-          width={textObj.width}
-          fontSize={textObj.fontSize} fontFamily={`${textObj.fontFamily}, sans-serif`}
-          fontStyle={fontStyleStr} textDecoration={textObj.isUnderline ? 'underline' : ''}
-          fill={textObj.isGradient ? undefined : textObj.fill} 
-          fillLinearGradientStartPoint={textObj.isGradient ? { x: 0, y: 0 } : undefined} 
-          fillLinearGradientEndPoint={textObj.isGradient ? { x: 0, y: textObj.fontSize * 3 } : undefined} 
-          fillLinearGradientColorStops={textObj.isGradient ? [0, textObj.gradientColors[0], 1, textObj.gradientColors[1]] : undefined}
-          align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight} 
-          shadowColor={appliedShadowColor} shadowBlur={appliedShadowBlur} shadowOffsetX={appliedShadowOffsetX} shadowOffsetY={appliedShadowOffsetY} shadowOpacity={appliedShadowOpacity}
-          stroke={textObj.stroke} strokeWidth={textObj.strokeWidth} fillAfterStrokeEnabled={textObj.strokeType === 'outer'}
-          padding={textObj.hasBgHighlight ? (textObj.bgHighlightPadding || 8) : 0}
-        />
       )}
+      <Text
+        text={isTypingOverlayOpen && selectedLayerId === textObj.id ? "" : textObj.text}
+        opacity={hasEmoji ? 0 : 1}
+        width={textObj.width}
+        fontSize={textObj.fontSize} fontFamily={`${textObj.fontFamily}, sans-serif`}
+        fontStyle={fontStyleStr} textDecoration={textObj.isUnderline ? 'underline' : ''}
+        fill={textObj.isGradient ? undefined : textObj.fill} 
+        fillLinearGradientStartPoint={textObj.isGradient ? { x: 0, y: 0 } : undefined} 
+        fillLinearGradientEndPoint={textObj.isGradient ? { x: 0, y: textObj.fontSize * 3 } : undefined} 
+        fillLinearGradientColorStops={textObj.isGradient ? [0, textObj.gradientColors[0], 1, textObj.gradientColors[1]] : undefined}
+        align={textObj.align} letterSpacing={textObj.letterSpacing} lineHeight={textObj.lineHeight} 
+        shadowColor={appliedShadowColor} shadowBlur={appliedShadowBlur} shadowOffsetX={appliedShadowOffsetX} shadowOffsetY={appliedShadowOffsetY} shadowOpacity={appliedShadowOpacity}
+        stroke={textObj.stroke} strokeWidth={textObj.strokeWidth} fillAfterStrokeEnabled={textObj.strokeType === 'outer'}
+        padding={textObj.hasBgHighlight ? (textObj.bgHighlightPadding || 8) : 0}
+      />
     </Label>
   );
 }
