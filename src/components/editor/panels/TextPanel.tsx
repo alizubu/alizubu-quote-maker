@@ -23,7 +23,7 @@ export default function TextPanel() {
     );
   }
 
-  const standardFonts = ['sans-serif', 'serif', 'monospace', 'Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Comic Sans MS', 'Inter', 'Montserrat', 'Playfair Display'];
+  const standardFonts = ['Mont Blanc', 'Mont Blanc Light', 'Mont Blanc Thin', 'sans-serif', 'serif', 'monospace', 'Arial', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Comic Sans MS', 'Inter', 'Montserrat', 'Playfair Display'];
 
   return (
     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300 pb-4">
