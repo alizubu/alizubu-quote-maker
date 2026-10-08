@@ -5,7 +5,7 @@ import { Check, Trash2 } from 'lucide-react';
 import { useEditorStore } from '../../../store/useEditorStore';
 
 export default function TypingOverlay() {
-  const { isTypingOverlayOpen, setTypingOverlayOpen, selectedLayerId, layers, updateLayer } = useEditorStore();
+  const { isTypingOverlayOpen, setTypingOverlayOpen, selectedLayerId, layers, updateLayer, saveHistory } = useEditorStore();
   const [localTextValue, setLocalTextValue] = useState("");
 
   const selectedLayer = layers.find(l => l.id === selectedLayerId);
@@ -20,9 +20,14 @@ export default function TypingOverlay() {
 
   const closeTypingOverlay = () => {
     if (selectedLayerId) {
+      saveHistory();
       updateLayer(selectedLayerId, { text: localTextValue });
     }
-    setTypingOverlayOpen(false);
+    // Defer overlay close to next frame so Konva can cleanly process the update
+    // before the Html emoji component re-mounts
+    requestAnimationFrame(() => {
+      setTypingOverlayOpen(false);
+    });
   };
 
   return (

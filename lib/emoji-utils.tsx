@@ -48,13 +48,18 @@ export function replaceEmojisWithNodes(text: string) {
   if (!text) return text;
   
   const regexGlobal = emojiRegex();
-  const parts: (string | React.ReactNode)[] = [];
+  const parts: React.ReactNode[] = [];
   let match;
   let lastIndex = 0;
+  let partKey = 0;
 
   while ((match = regexGlobal.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      parts.push(text.substring(lastIndex, match.index));
+      const segment = text.substring(lastIndex, match.index);
+      // Wrap text segments in inline spans to prevent line-break opportunities around emojis
+      parts.push(
+        <span key={`t-${partKey++}`} style={{ whiteSpace: 'pre-wrap' }}>{segment}</span>
+      );
     }
     
     const emojiStr = match[0];
@@ -62,20 +67,22 @@ export function replaceEmojisWithNodes(text: string) {
     
     parts.push(
       <img
-        key={`${match.index}-${emojiStr}`}
+        key={`e-${partKey++}`}
         src={url}
         alt={emojiStr}
-        className="inline-block w-[1em] h-[1em] align-text-bottom mx-0"
+        style={{
+          display: 'inline',
+          width: '1em',
+          height: '1em',
+          verticalAlign: 'text-bottom',
+          margin: '0',
+        }}
         draggable={false}
         onError={(e) => {
-          // Fallback if the image isn't found (e.g. newer emoji not in v15)
-          // Hide the broken image icon and render the native emoji as fallback if possible.
-          e.currentTarget.style.display = 'none';
-          const nextNode = e.currentTarget.nextSibling;
-          if (nextNode && nextNode.nodeType === Node.TEXT_NODE) {
-              // we can't easily alter siblings here safely in React without refs,
-              // but hiding the image is usually enough if we output standard text as title/alt.
-          }
+          // Fallback: show native emoji text instead of broken image
+          const span = document.createElement('span');
+          span.textContent = emojiStr;
+          e.currentTarget.replaceWith(span);
         }}
         title={emojiStr}
       />
@@ -84,8 +91,12 @@ export function replaceEmojisWithNodes(text: string) {
   }
   
   if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex));
+    const segment = text.substring(lastIndex);
+    parts.push(
+      <span key={`t-${partKey++}`} style={{ whiteSpace: 'pre-wrap' }}>{segment}</span>
+    );
   }
   
   return parts.length > 0 ? parts : [text];
 }
+

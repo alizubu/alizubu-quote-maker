@@ -99,7 +99,7 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
           cornerRadius={textObj.bgHighlightRadius || 0}
         />
       )}
-      {hasEmoji && (
+      {hasEmoji && !(isTypingOverlayOpen && selectedLayerId === textObj.id) && (
         <Html
           divProps={{
             style: {
@@ -118,9 +118,10 @@ export default function TextNode({ textObj, isTypingOverlayOpen, selectedLayerId
               lineHeight: textObj.lineHeight,
               textShadow: appliedShadowOpacity > 0 ? `${appliedShadowOffsetX}px ${appliedShadowOffsetY}px ${appliedShadowBlur}px ${appliedShadowColor}` : 'none',
               WebkitTextStroke: textObj.strokeWidth ? `${textObj.strokeWidth}px ${textObj.stroke}` : 'none',
-              pointerEvents: 'none', // Let Konva handle clicks
+              pointerEvents: 'none',
               whiteSpace: 'pre-wrap',
-              display: isTypingOverlayOpen && selectedLayerId === textObj.id ? 'none' : 'block',
+              wordBreak: 'keep-all',
+              overflowWrap: 'break-word',
             }
           }}
         >
